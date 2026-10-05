@@ -30,3 +30,11 @@ mv -- "$temporary_config" "$config_file"
 trap - EXIT
 
 hyprctl hyprpaper wallpaper ", $wallpaper, cover"
+
+# Refresh the shared desktop palette after the wallpaper is applied. Matugen is
+# optional so this remains a working wallpaper switcher on a minimal install.
+if command -v matugen >/dev/null 2>&1 && matugen image "$wallpaper"; then
+    hyprctl reload
+    dunstctl reload >/dev/null 2>&1 || true
+    pkill -SIGUSR1 -x kitty >/dev/null 2>&1 || true
+fi

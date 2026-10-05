@@ -23,7 +23,7 @@ done
 if "$install_packages"; then
     sudo pacman -S --needed --noconfirm \
         hyprland hyprpaper hypridle hyprlock kitty fastfetch wofi quickshell \
-        dunst networkmanager
+        dunst matugen networkmanager
 fi
 
 backup_root="$home_dir/.config-backups/hyprland-dotfiles-$(date +%Y%m%d-%H%M%S)"
@@ -65,14 +65,32 @@ install_file() {
 }
 
 install_file "$repo_dir/config/hypr/hyprland.lua" "$home_dir/.config/hypr/hyprland.lua"
+install_file "$repo_dir/config/hypr/colors.lua" "$home_dir/.config/hypr/colors.lua"
 install_file "$repo_dir/config/hypr/hypridle.conf" "$home_dir/.config/hypr/hypridle.conf"
 install_file "$repo_dir/config/hypr/hyprlock.conf" "$home_dir/.config/hypr/hyprlock.conf"
+install_file "$repo_dir/config/hypr/hyprlock-colors.conf" "$home_dir/.config/hypr/hyprlock-colors.conf"
 install_file "$repo_dir/config/hypr/hyprpaper.conf" "$home_dir/.config/hypr/hyprpaper.conf"
 install_file "$repo_dir/config/kitty/kitty.conf" "$home_dir/.config/kitty/kitty.conf"
+install_file "$repo_dir/config/kitty/dynamic.conf" "$home_dir/.config/kitty/dynamic.conf"
 install_file "$repo_dir/config/fastfetch/config.jsonc" "$home_dir/.config/fastfetch/config.jsonc"
 install_file "$repo_dir/config/wofi/config" "$home_dir/.config/wofi/config"
 install_file "$repo_dir/config/wofi/style.css" "$home_dir/.config/wofi/style.css"
+install_file "$repo_dir/config/wofi/colors.css" "$home_dir/.config/wofi/colors.css"
 install_file "$repo_dir/config/quickshell/shell.qml" "$home_dir/.config/quickshell/shell.qml"
+install_file "$repo_dir/config/quickshell/DynamicTheme.qml" "$home_dir/.config/quickshell/DynamicTheme.qml"
+install_file "$repo_dir/config/dunst/dunstrc" "$home_dir/.config/dunst/dunstrc"
+install_file "$repo_dir/config/gtk-3.0/gtk.css" "$home_dir/.config/gtk-3.0/gtk.css"
+install_file "$repo_dir/config/gtk-3.0/matugen-colors.css" "$home_dir/.config/gtk-3.0/matugen-colors.css"
+install_file "$repo_dir/config/gtk-4.0/gtk.css" "$home_dir/.config/gtk-4.0/gtk.css"
+install_file "$repo_dir/config/gtk-4.0/matugen-colors.css" "$home_dir/.config/gtk-4.0/matugen-colors.css"
+install_file "$repo_dir/config/matugen/config.toml" "$home_dir/.config/matugen/config.toml"
+install_file "$repo_dir/config/matugen/templates/hypr-colors.lua" "$home_dir/.config/matugen/templates/hypr-colors.lua"
+install_file "$repo_dir/config/matugen/templates/kitty.conf" "$home_dir/.config/matugen/templates/kitty.conf"
+install_file "$repo_dir/config/matugen/templates/wofi.css" "$home_dir/.config/matugen/templates/wofi.css"
+install_file "$repo_dir/config/matugen/templates/DynamicTheme.qml" "$home_dir/.config/matugen/templates/DynamicTheme.qml"
+install_file "$repo_dir/config/matugen/templates/hyprlock-colors.conf" "$home_dir/.config/matugen/templates/hyprlock-colors.conf"
+install_file "$repo_dir/config/matugen/templates/dunstrc" "$home_dir/.config/matugen/templates/dunstrc"
+install_file "$repo_dir/config/matugen/templates/gtk-colors.css" "$home_dir/.config/matugen/templates/gtk-colors.css"
 install_file "$repo_dir/bin/hypr-wallpaper-switch" "$home_dir/.local/bin/hypr-wallpaper-switch"
 
 for wallpaper in "$repo_dir"/assets/wallpapers/*; do
@@ -84,4 +102,4 @@ if "$made_backup"; then
     printf 'Previous files backed up to %s\n' "$backup_root"
 fi
 
-printf 'Done. Reload Hyprland with Super + Shift + R, then restart Hyprpaper or log in again.\n'
+printf 'Done. The wallpaper switcher now refreshes the Matugen palette automatically.\n'

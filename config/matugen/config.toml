@@ -1,0 +1,50 @@
+[config]
+version_check = false
+fallback_color = "#d4aa62"
+prefer = "saturation"
+caching = true
+contrast = 0.25
+
+[config.wallpaper]
+set = false
+command = "true"
+
+[templates.hyprland]
+input_path = "~/.config/matugen/templates/hypr-colors.lua"
+output_path = "~/.config/hypr/colors.lua"
+type = "SchemeTonalSpot"
+
+[templates.kitty]
+input_path = "~/.config/matugen/templates/kitty.conf"
+output_path = "~/.config/kitty/dynamic.conf"
+type = "SchemeTonalSpot"
+
+[templates.wofi]
+input_path = "~/.config/matugen/templates/wofi.css"
+output_path = "~/.config/wofi/colors.css"
+type = "SchemeTonalSpot"
+
+[templates.quickshell]
+input_path = "~/.config/matugen/templates/DynamicTheme.qml"
+output_path = "~/.config/quickshell/DynamicTheme.qml"
+type = "SchemeTonalSpot"
+
+[templates.hyprlock]
+input_path = "~/.config/matugen/templates/hyprlock-colors.conf"
+output_path = "~/.config/hypr/hyprlock-colors.conf"
+type = "SchemeTonalSpot"
+
+[templates.dunst]
+input_path = "~/.config/matugen/templates/dunstrc"
+output_path = "~/.config/dunst/dunstrc"
+type = "SchemeTonalSpot"
+
+[templates.gtk3]
+input_path = "~/.config/matugen/templates/gtk-colors.css"
+output_path = "~/.config/gtk-3.0/matugen-colors.css"
+type = "SchemeTonalSpot"
+
+[templates.gtk4]
+input_path = "~/.config/matugen/templates/gtk-colors.css"
+output_path = "~/.config/gtk-4.0/matugen-colors.css"
+type = "SchemeTonalSpot"

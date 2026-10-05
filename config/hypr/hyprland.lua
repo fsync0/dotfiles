@@ -1,4 +1,5 @@
 -- Personal Hyprland configuration. Reload with SUPER + SHIFT + R.
+local colors = require("colors")
 
 local terminal = "kitty"
 local file_manager = "dolphin"
@@ -28,13 +29,13 @@ end)
 
 hl.config({
     general = {
-        -- Compact layout with thin parchment frames.
+        -- Compact layout with wallpaper-derived frames.
         gaps_in = 8,
         gaps_out = 22,
-        border_size = 2,
+        border_size = 0,
         col = {
-            active_border = "rgba(f7f0dcff)",
-            inactive_border = "rgba(f7f0dcff)",
+            active_border = "rgba(" .. colors.primary .. "ff)",
+            inactive_border = "rgba(" .. colors.outline_variant .. "ff)",
         },
         resize_on_border = false,
         allow_tearing = false,
@@ -48,7 +49,7 @@ hl.config({
             enabled = false,
             range = 12,
             render_power = 3,
-            color = "rgba(02061799)",
+            color = "rgba(" .. colors.shadow .. "99)",
         },
         blur = {
             enabled = false,

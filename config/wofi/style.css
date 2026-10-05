@@ -1,6 +1,8 @@
+@import url("colors.css");
+
 window {
-    background-color: #111827;
-    border: 2px solid #f7f0dc;
+    background-color: @background;
+    border: 2px solid @primary;
     border-radius: 0;
     font-family: "JetBrainsMono Nerd Font";
     font-size: 14px;
@@ -9,9 +11,9 @@ window {
 #input {
     margin: 8px;
     padding: 8px 10px;
-    background-color: #111827;
-    color: #f7f0dc;
-    border: 1px solid #537278;
+    background-color: @background;
+    color: @foreground;
+    border: 1px solid @selection;
     border-radius: 0;
 }
 
@@ -22,13 +24,13 @@ window {
 
 #entry {
     padding: 8px 10px;
-    color: #f7f0dc;
+    color: @foreground;
     background-color: transparent;
 }
 
 #entry:selected {
-    color: #111827;
-    background-color: #f7f0dc;
+    color: @background;
+    background-color: @primary;
 }
 
 #text {

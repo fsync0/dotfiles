@@ -1,8 +1,8 @@
 # Hyprland dotfiles
 
 Personal Arch Linux desktop configuration for Hyprland, Kitty, Fastfetch, Wofi,
-Hyprpaper, Hypridle, Hyprlock, and Quickshell. It includes the ink-wash wallpaper
-used by the desktop theme.
+Hyprpaper, Hypridle, Hyprlock, Dunst, Quickshell, and Matugen. It includes the
+ink-wash wallpaper used by the desktop theme.
 
 ## Repository layout
 
@@ -13,19 +13,30 @@ hyprland-dotfiles/
 ├── bin/
 │   └── hypr-wallpaper-switch        # Applies and persists a selected wallpaper
 ├── config/
+│   ├── dunst/
+│   │   └── dunstrc                 # Wallpaper-derived notification colors
 │   ├── fastfetch/
 │   │   └── config.jsonc             # System-information layout
+│   ├── gtk-3.0/ and gtk-4.0/        # Dynamic color overrides for GTK apps
 │   ├── hypr/
+│   │   ├── colors.lua               # Generated Hyprland border palette
 │   │   ├── hypridle.conf            # Idle, lock, and suspend timers
 │   │   ├── hyprland.lua             # Monitors, keybinds, layout, borders
 │   │   ├── hyprlock.conf            # Lock-screen appearance
+│   │   ├── hyprlock-colors.conf     # Generated lock-screen palette
 │   │   └── hyprpaper.conf           # Wallpaper configuration
 │   ├── kitty/
-│   │   └── kitty.conf               # Terminal colors, padding, borders
+│   │   ├── dynamic.conf             # Generated terminal palette
+│   │   └── kitty.conf               # Terminal layout and generated palette import
+│   ├── matugen/
+│   │   ├── config.toml              # Palette generator settings
+│   │   └── templates/               # Sources for every generated color file
 │   ├── quickshell/
-│   │   └── shell.qml                # Optional shell/panel definition
+│   │   ├── DynamicTheme.qml         # Generated shell color palette
+│   │   └── shell.qml                # Top-left menu and wallpaper manager
 │   └── wofi/
 │       ├── config                   # Text-only application runner behavior
+│       ├── colors.css               # Generated launcher palette
 │       └── style.css                # Application runner appearance
 ├── .gitignore
 ├── README.md
@@ -44,6 +55,18 @@ to open the Walt-inspired wallpaper manager. It automatically scans
 available. Use `↑/↓` or `j/k` to choose an image, `Enter` to apply it, `r` for a
 random wallpaper, and `Esc` to close. Double-clicking an entry also applies it.
 
+## Wallpaper-driven colors
+
+Every wallpaper selection runs Matugen, which extracts a dark, high-contrast
+palette from the image. That shared palette is applied to Hyprland borders,
+Kitty, Wofi, Quickshell, Hyprlock, Dunst, and GTK application colors. Existing
+apps may need to be reopened to pick up new GTK colors; the other components
+reload automatically. You can regenerate the active palette manually with:
+
+```sh
+matugen image "$(sed -n 's/^    path = //p' ~/.config/hypr/hyprpaper.conf)"
+```
+
 ## Restore on a new machine
 
 ```sh
@@ -52,8 +75,8 @@ cd dotfiles
 ./setup.sh --install-packages
 ```
 
-`--install-packages` installs the needed Arch packages with `pacman`. Omit it if
-they are already installed:
+`--install-packages` installs the needed Arch packages—including Matugen—with
+`pacman`. Omit it if they are already installed:
 
 ```sh
 ./setup.sh

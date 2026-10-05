@@ -18,6 +18,8 @@ ShellRoot {
     readonly property string home: Quickshell.env("HOME")
     readonly property string wallpaperDirectory: home + "/Pictures/Wallpapers"
 
+    DynamicTheme { id: theme }
+
     function selectedWallpaper() {
         return wallpapers.length > 0 ? wallpapers[selectedIndex] : null
     }
@@ -42,7 +44,22 @@ ShellRoot {
         metaSize = "Loading..."
         metaFormat = "Loading..."
         metaModified = "Loading..."
-        metadataScanner.exec(["identify", "-format", "%wx%h|%b|%m|%[date:modify]", wallpaper.path])
+        metadataScanner.exec(["/usr/bin/sh", "-c", "/usr/bin/file -b -- \"$1\"; /usr/bin/stat -c '%s|%y' -- \"$1\"", "metadata", wallpaper.path])
+    }
+
+    function formatFileSize(bytes) {
+        const size = Number(bytes)
+        if (!Number.isFinite(size) || size < 0)
+            return "Unknown"
+
+        const units = ["B", "KB", "MB", "GB"]
+        let value = size
+        let unit = 0
+        while (value >= 1024 && unit < units.length - 1) {
+            value /= 1024
+            unit += 1
+        }
+        return (unit === 0 ? value : value.toFixed(1)) + " " + units[unit]
     }
 
     onPickerOpenChanged: if (pickerOpen) refreshWallpapers()
@@ -97,11 +114,19 @@ ShellRoot {
 
         stdout: StdioCollector {
             onStreamFinished: {
-                const fields = this.text.split("|")
-                root.metaResolution = fields[0] || "Unknown"
-                root.metaSize = fields[1] || "Unknown"
-                root.metaFormat = fields[2] || "Unknown"
-                root.metaModified = fields[3] ? fields[3].replace(/ \+.*$/, "") : "Unknown"
+                const lines = this.text.trim().split("\n")
+                const description = lines[0] || ""
+                const fields = (lines[1] || "").split("|")
+                const dimensions = description.match(/(\d+)\s*x\s*(\d+)/g)
+                const resolution = dimensions && dimensions.length > 0
+                    ? dimensions[dimensions.length - 1].match(/(\d+)\s*x\s*(\d+)/)
+                    : null
+                const format = description.match(/^([A-Za-z]+)/)
+
+                root.metaResolution = resolution ? resolution[1] + "×" + resolution[2] : "Unknown"
+                root.metaSize = root.formatFileSize(fields[0])
+                root.metaFormat = format ? format[1].toUpperCase() : "Unknown"
+                root.metaModified = fields[1] ? fields[1].replace(/\..*$/, "") : "Unknown"
             }
         }
     }
@@ -139,7 +164,7 @@ ShellRoot {
                     width: 16
                     height: parent.height
                     text: "󰣇"
-                    color: "#748078"
+                    color: theme.muted
                     font.family: "JetBrainsMono Nerd Font"
                     font.pixelSize: 14
                     horizontalAlignment: Text.AlignHCenter
@@ -161,7 +186,7 @@ ShellRoot {
                         Text {
                             anchors.centerIn: parent
                             text: modelData.name
-                            color: modelData.focused ? "#e7bd68" : "#748078"
+                            color: modelData.focused ? theme.primary : theme.muted
                             font.family: "JetBrainsMono Nerd Font"
                             font.bold: modelData.focused
                             font.pixelSize: 13
@@ -172,7 +197,7 @@ ShellRoot {
                             anchors.bottom: parent.bottom
                             width: 10
                             height: 2
-                            color: "#e7bd68"
+                            color: theme.primary
                             visible: modelData.focused
                         }
 
@@ -188,7 +213,7 @@ ShellRoot {
                     width: 14
                     height: parent.height
                     text: "~"
-                    color: "#748078"
+                    color: theme.muted
                     font.family: "JetBrainsMono Nerd Font"
                     font.pixelSize: 13
                     horizontalAlignment: Text.AlignHCenter
@@ -223,7 +248,7 @@ ShellRoot {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: "#090b12d9"
+                    color: theme.overlay
 
                     MouseArea {
                         anchors.fill: parent
@@ -236,19 +261,15 @@ ShellRoot {
                     anchors.centerIn: parent
                     width: Math.min(parent.width - 130, 1640)
                     height: Math.min(parent.height - 130, 980)
-                    radius: 20
-                    gradient: Gradient {
-                        GradientStop { position: 0.0; color: "#e74c8c" }
-                        GradientStop { position: 0.48; color: "#efb842" }
-                        GradientStop { position: 1.0; color: "#41dcd6" }
-                    }
+                    radius: 0
+                    color: "transparent"
 
                     Rectangle {
                         id: surface
                         anchors.fill: parent
-                        anchors.margins: 4
-                        radius: 16
-                        color: "#202331"
+                        anchors.margins: 0
+                        radius: 0
+                        color: theme.surface
 
                         // Prevent clicks in unused dialog space from closing the picker.
                         MouseArea { anchors.fill: parent }
@@ -256,7 +277,7 @@ ShellRoot {
                         Item {
                             id: content
                             anchors.fill: parent
-                            anchors.margins: 38
+                            anchors.margins: 30
                             z: 1
                             readonly property real leftWidth: Math.min(width * 0.34, 500)
                             readonly property real mainHeight: height - 76
@@ -275,7 +296,7 @@ ShellRoot {
                                     radius: 7
                                     color: "transparent"
                                     border.width: 2
-                                    border.color: "#e0b633"
+                                    border.color: theme.primary
 
                                     Rectangle {
                                         x: 12
@@ -290,10 +311,10 @@ ShellRoot {
                                         x: 19
                                         y: -13
                                         text: "All [Name]"
-                                        color: "#f0c43e"
+                                        color: theme.primary
                                         font.family: "JetBrainsMono Nerd Font"
                                         font.bold: true
-                                        font.pixelSize: 20
+                                        font.pixelSize: 15
                                     }
 
                                     ListView {
@@ -308,12 +329,13 @@ ShellRoot {
 
                                         delegate: Item {
                                             required property var modelData
+                                            required property int index
                                             width: wallpaperList.width
-                                            height: 34
+                                            height: 28
 
                                             Rectangle {
                                                 anchors.fill: parent
-                                                color: index === root.selectedIndex ? "#2c3040" : "transparent"
+                                                color: index === root.selectedIndex ? theme.surfaceHigh : "transparent"
                                                 radius: 3
                                             }
 
@@ -322,10 +344,10 @@ ShellRoot {
                                                 anchors.leftMargin: 9
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 text: (index === root.selectedIndex ? "›  " : "   ") + modelData.name
-                                                color: index === root.selectedIndex ? "#f0c43e" : "#f5f0e4"
+                                                color: index === root.selectedIndex ? theme.primary : theme.foreground
                                                 font.family: "JetBrainsMono Nerd Font"
                                                 font.bold: index === root.selectedIndex
-                                                font.pixelSize: 17
+                                                font.pixelSize: 13
                                                 elide: Text.ElideRight
                                                 width: parent.width - 20
                                             }
@@ -338,7 +360,7 @@ ShellRoot {
                                                 width: 10
                                                 height: 10
                                                 radius: 5
-                                                color: "#f0c43e"
+                                                color: theme.primary
                                             }
 
                                             MouseArea {
@@ -360,7 +382,7 @@ ShellRoot {
                                     radius: 7
                                     color: "transparent"
                                     border.width: 2
-                                    border.color: "#ad80e4"
+                                    border.color: theme.outlineVariant
 
                                     Rectangle {
                                         x: 12
@@ -375,10 +397,10 @@ ShellRoot {
                                         x: 19
                                         y: -13
                                         text: "Folder [" + root.wallpapers.length + " walls]"
-                                        color: "#e6ae63"
+                                        color: theme.secondary
                                         font.family: "JetBrainsMono Nerd Font"
                                         font.bold: true
-                                        font.pixelSize: 20
+                                        font.pixelSize: 15
                                     }
 
                                     Text {
@@ -388,9 +410,9 @@ ShellRoot {
                                         text: "›  " + (root.selectedWallpaper() ? root.selectedWallpaper().name : "No wallpapers")
                                             + "\n\n   " + root.wallpaperDirectory
                                             + "\n\n   Double-click or press Enter to apply."
-                                        color: "#f5f0e4"
+                                        color: theme.foreground
                                         font.family: "JetBrainsMono Nerd Font"
-                                        font.pixelSize: 15
+                                        font.pixelSize: 12
                                         wrapMode: Text.Wrap
                                     }
                                 }
@@ -410,7 +432,7 @@ ShellRoot {
                                     radius: 7
                                     color: "transparent"
                                     border.width: 2
-                                    border.color: "#ad80e4"
+                                    border.color: theme.outlineVariant
 
                                     Rectangle {
                                         x: 12
@@ -425,10 +447,10 @@ ShellRoot {
                                         x: 19
                                         y: -13
                                         text: "Preview"
-                                        color: "#e6ae63"
+                                        color: theme.secondary
                                         font.family: "JetBrainsMono Nerd Font"
                                         font.bold: true
-                                        font.pixelSize: 20
+                                        font.pixelSize: 15
                                     }
 
                                     Image {
@@ -448,15 +470,15 @@ ShellRoot {
                                         width: 80
                                         height: 32
                                         radius: 16
-                                        color: "#e0a323"
+                                        color: theme.primaryContainer
 
                                         Text {
                                             anchors.centerIn: parent
                                             text: "ACTIVE"
-                                            color: "#1a1d1d"
+                                            color: theme.primaryContainerText
                                             font.family: "JetBrainsMono Nerd Font"
                                             font.bold: true
-                                            font.pixelSize: 12
+                                            font.pixelSize: 10
                                         }
                                     }
                                 }
@@ -470,7 +492,7 @@ ShellRoot {
                                     radius: 7
                                     color: "transparent"
                                     border.width: 2
-                                    border.color: "#ad80e4"
+                                    border.color: theme.outlineVariant
 
                                     Rectangle {
                                         x: 12
@@ -485,10 +507,10 @@ ShellRoot {
                                         x: 19
                                         y: -13
                                         text: "Metadata"
-                                        color: "#e6ae63"
+                                        color: theme.secondary
                                         font.family: "JetBrainsMono Nerd Font"
                                         font.bold: true
-                                        font.pixelSize: 20
+                                        font.pixelSize: 15
                                     }
 
                                     Text {
@@ -496,16 +518,16 @@ ShellRoot {
                                         anchors.margins: 22
                                         anchors.topMargin: 27
                                         textFormat: Text.RichText
-                                        text: "<b><font color='#74d9ee'>File:</font></b> "
+                                        text: "<b><font color='" + theme.tertiary + "'>File:</font></b> "
                                             + (root.selectedWallpaper() ? root.selectedWallpaper().name : "—")
-                                            + "<br><b><font color='#74d9ee'>Dir:</font></b> " + root.wallpaperDirectory
-                                            + "<br><b><font color='#74d9ee'>Resolution:</font></b> " + root.metaResolution
-                                            + "&nbsp;&nbsp; <b><font color='#74d9ee'>Size:</font></b> " + root.metaSize
-                                            + "<br><b><font color='#74d9ee'>Modified:</font></b> " + root.metaModified
-                                            + "<br><b><font color='#74d9ee'>Format:</font></b> " + root.metaFormat
-                                        color: "#f5f0e4"
+                                            + "<br><b><font color='" + theme.tertiary + "'>Dir:</font></b> " + root.wallpaperDirectory
+                                            + "<br><b><font color='" + theme.tertiary + "'>Resolution:</font></b> " + root.metaResolution
+                                            + "&nbsp;&nbsp; <b><font color='" + theme.tertiary + "'>Size:</font></b> " + root.metaSize
+                                            + "<br><b><font color='" + theme.tertiary + "'>Modified:</font></b> " + root.metaModified
+                                            + "<br><b><font color='" + theme.tertiary + "'>Format:</font></b> " + root.metaFormat
+                                        color: theme.foreground
                                         font.family: "JetBrainsMono Nerd Font"
-                                        font.pixelSize: 15
+                                        font.pixelSize: 12
                                         wrapMode: Text.WrapAnywhere
                                     }
                                 }
@@ -520,7 +542,7 @@ ShellRoot {
                                 radius: 7
                                 color: "transparent"
                                 border.width: 2
-                                border.color: "#ad80e4"
+                                border.color: theme.outlineVariant
 
                                 Rectangle {
                                     x: 12
@@ -535,18 +557,18 @@ ShellRoot {
                                     x: 19
                                     y: -13
                                     text: "Help"
-                                    color: "#e6ae63"
+                                    color: theme.secondary
                                     font.family: "JetBrainsMono Nerd Font"
                                     font.bold: true
-                                    font.pixelSize: 20
+                                    font.pixelSize: 15
                                 }
 
                                 Text {
                                     anchors.centerIn: parent
                                     text: "↑/↓ or j/k  move   |   Enter  apply   |   r  random   |   Esc  close"
-                                    color: "#90a0c8"
+                                    color: theme.muted
                                     font.family: "JetBrainsMono Nerd Font"
-                                    font.pixelSize: 15
+                                    font.pixelSize: 12
                                 }
                             }
                         }
