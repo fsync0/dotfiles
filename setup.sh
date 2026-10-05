@@ -83,6 +83,9 @@ install_file "$repo_dir/config/gtk-3.0/gtk.css" "$home_dir/.config/gtk-3.0/gtk.c
 install_file "$repo_dir/config/gtk-3.0/matugen-colors.css" "$home_dir/.config/gtk-3.0/matugen-colors.css"
 install_file "$repo_dir/config/gtk-4.0/gtk.css" "$home_dir/.config/gtk-4.0/gtk.css"
 install_file "$repo_dir/config/gtk-4.0/matugen-colors.css" "$home_dir/.config/gtk-4.0/matugen-colors.css"
+install_file "$repo_dir/config/vim/wallpaper-theme.vim" "$home_dir/.config/vim/wallpaper-theme.vim"
+install_file "$repo_dir/config/vim/vimrc" "$home_dir/.vimrc"
+install_file "$repo_dir/config/nvim/init.vim" "$home_dir/.config/nvim/init.vim"
 install_file "$repo_dir/config/matugen/config.toml" "$home_dir/.config/matugen/config.toml"
 install_file "$repo_dir/config/matugen/templates/hypr-colors.lua" "$home_dir/.config/matugen/templates/hypr-colors.lua"
 install_file "$repo_dir/config/matugen/templates/kitty.conf" "$home_dir/.config/matugen/templates/kitty.conf"
@@ -91,6 +94,14 @@ install_file "$repo_dir/config/matugen/templates/DynamicTheme.qml" "$home_dir/.c
 install_file "$repo_dir/config/matugen/templates/hyprlock-colors.conf" "$home_dir/.config/matugen/templates/hyprlock-colors.conf"
 install_file "$repo_dir/config/matugen/templates/dunstrc" "$home_dir/.config/matugen/templates/dunstrc"
 install_file "$repo_dir/config/matugen/templates/gtk-colors.css" "$home_dir/.config/matugen/templates/gtk-colors.css"
+
+# Each numbered wallpaper has a checked-in, exact palette. Keep the files together
+# so a fresh install gets identical colors without having to regenerate them.
+while IFS= read -r -d '' preset_file; do
+    preset_relative="${preset_file#"$repo_dir/config/matugen/presets/"}"
+    install_file "$preset_file" "$home_dir/.config/matugen/presets/$preset_relative"
+done < <(find "$repo_dir/config/matugen/presets" -type f -print0)
+
 install_file "$repo_dir/bin/hypr-wallpaper-switch" "$home_dir/.local/bin/hypr-wallpaper-switch"
 
 for wallpaper in "$repo_dir"/assets/wallpapers/*; do

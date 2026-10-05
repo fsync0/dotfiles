@@ -30,10 +30,14 @@ hyprland-dotfiles/
 │   │   └── kitty.conf               # Terminal layout and generated palette import
 │   ├── matugen/
 │   │   ├── config.toml              # Palette generator settings
+│   │   ├── presets/                  # Exact palette per wallpaper-XX ID
 │   │   └── templates/               # Sources for every generated color file
 │   ├── quickshell/
 │   │   ├── DynamicTheme.qml         # Generated shell color palette
 │   │   └── shell.qml                # Top-left menu and wallpaper manager
+│   ├── vim/                         # Shared Kitty-palette loader for Vim/Neovim
+│   ├── nvim/
+│   │   └── init.vim                 # Loads the shared wallpaper theme
 │   └── wofi/
 │       ├── config                   # Text-only application runner behavior
 │       ├── colors.css               # Generated launcher palette
@@ -57,11 +61,18 @@ random wallpaper, and `Esc` to close. Double-clicking an entry also applies it.
 
 ## Wallpaper-driven colors
 
-Every wallpaper selection runs Matugen, which extracts a dark, high-contrast
-palette from the image. That shared palette is applied to Hyprland borders,
-Kitty, Wofi, Quickshell, Hyprlock, Dunst, and GTK application colors. Existing
-apps may need to be reopened to pick up new GTK colors; the other components
-reload automatically. You can regenerate the active palette manually with:
+Each wallpaper has a stable ID such as `wallpaper-01.jpg`; its exact matching
+palette lives in `config/matugen/presets/wallpaper-01/`. Selecting a known
+wallpaper restores its checked-in palette, which makes its colors repeatable
+across reinstalls. A newly added image is analyzed once with Matugen and receives
+its own preset folder automatically.
+
+The shared palette is applied to Hyprland, Kitty, Wofi, Quickshell, Hyprlock,
+Dunst, GTK, and Vim/Neovim. Vim and Neovim read Kitty's current generated
+palette at startup and whenever they regain focus, so an already-open editor
+updates after switching wallpaper. Existing GUI apps may need reopening to pick
+up new GTK colors; the other components reload automatically. You can regenerate
+the active palette manually with:
 
 ```sh
 matugen image "$(sed -n 's/^    path = //p' ~/.config/hypr/hyprpaper.conf)"

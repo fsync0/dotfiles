@@ -12,39 +12,39 @@ command = "true"
 [templates.hyprland]
 input_path = "~/.config/matugen/templates/hypr-colors.lua"
 output_path = "~/.config/hypr/colors.lua"
-type = "SchemeTonalSpot"
+type = "SchemeFidelity"
 
 [templates.kitty]
 input_path = "~/.config/matugen/templates/kitty.conf"
 output_path = "~/.config/kitty/dynamic.conf"
-type = "SchemeTonalSpot"
+type = "SchemeFidelity"
 
 [templates.wofi]
 input_path = "~/.config/matugen/templates/wofi.css"
 output_path = "~/.config/wofi/colors.css"
-type = "SchemeTonalSpot"
+type = "SchemeFidelity"
 
 [templates.quickshell]
 input_path = "~/.config/matugen/templates/DynamicTheme.qml"
 output_path = "~/.config/quickshell/DynamicTheme.qml"
-type = "SchemeTonalSpot"
+type = "SchemeFidelity"
 
 [templates.hyprlock]
 input_path = "~/.config/matugen/templates/hyprlock-colors.conf"
 output_path = "~/.config/hypr/hyprlock-colors.conf"
-type = "SchemeTonalSpot"
+type = "SchemeFidelity"
 
 [templates.dunst]
 input_path = "~/.config/matugen/templates/dunstrc"
 output_path = "~/.config/dunst/dunstrc"
-type = "SchemeTonalSpot"
+type = "SchemeFidelity"
 
 [templates.gtk3]
 input_path = "~/.config/matugen/templates/gtk-colors.css"
 output_path = "~/.config/gtk-3.0/matugen-colors.css"
-type = "SchemeTonalSpot"
+type = "SchemeFidelity"
 
 [templates.gtk4]
 input_path = "~/.config/matugen/templates/gtk-colors.css"
 output_path = "~/.config/gtk-4.0/matugen-colors.css"
-type = "SchemeTonalSpot"
+type = "SchemeFidelity"
