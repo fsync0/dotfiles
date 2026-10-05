@@ -39,9 +39,10 @@ its home-directory placeholder during installation, so it works for a different
 Linux username too.
 
 The Quickshell workspace menu appears in the top-left. Press `Super + Shift + W`
-to open the wallpaper carousel. It automatically scans `~/Pictures/Wallpapers/`,
-so add PNG, JPG, JPEG, or WebP files there to make them available. Click a preview
-to apply it, or use the arrow keys followed by `Enter`; press `Esc` to cancel.
+to open the Walt-inspired wallpaper manager. It automatically scans
+`~/Pictures/Wallpapers/`, so add PNG, JPG, JPEG, or WebP files there to make them
+available. Use `↑/↓` or `j/k` to choose an image, `Enter` to apply it, `r` for a
+random wallpaper, and `Esc` to close. Double-clicking an entry also applies it.
 
 ## Restore on a new machine
 

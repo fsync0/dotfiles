@@ -10,10 +10,20 @@ ShellRoot {
     property bool pickerOpen: false
     property int selectedIndex: 0
     property var wallpapers: []
+    property string currentWallpaperPath: ""
+    property string metaResolution: "Loading..."
+    property string metaSize: "Loading..."
+    property string metaFormat: "Loading..."
+    property string metaModified: "Loading..."
     readonly property string home: Quickshell.env("HOME")
     readonly property string wallpaperDirectory: home + "/Pictures/Wallpapers"
 
+    function selectedWallpaper() {
+        return wallpapers.length > 0 ? wallpapers[selectedIndex] : null
+    }
+
     function applyWallpaper(path) {
+        currentWallpaperPath = path
         Quickshell.execDetached([home + "/.local/bin/hypr-wallpaper-switch", path])
         pickerOpen = false
     }
@@ -23,7 +33,37 @@ ShellRoot {
         wallpaperScanner.running = true
     }
 
+    function refreshMetadata() {
+        const wallpaper = selectedWallpaper()
+        if (!wallpaper)
+            return
+
+        metaResolution = "Loading..."
+        metaSize = "Loading..."
+        metaFormat = "Loading..."
+        metaModified = "Loading..."
+        metadataScanner.exec(["identify", "-format", "%wx%h|%b|%m|%[date:modify]", wallpaper.path])
+    }
+
     onPickerOpenChanged: if (pickerOpen) refreshWallpapers()
+    onSelectedIndexChanged: {
+        refreshMetadata()
+        if (pickerOpen && wallpapers.length > 0)
+            wallpaperList.positionViewAtIndex(selectedIndex, ListView.Contain)
+    }
+
+    Process {
+        id: activeWallpaperScanner
+        command: ["sh", "-c", "sed -n 's/^    path = //p' \"$HOME/.config/hypr/hyprpaper.conf\" | head -n 1"]
+        running: true
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.currentWallpaperPath = this.text.trim()
+                root.refreshWallpapers()
+            }
+        }
+    }
 
     Process {
         id: wallpaperScanner
@@ -44,7 +84,24 @@ ShellRoot {
                             .replace(/\.[^.]+$/, "")
                             .replace(/[-_]/g, " ")
                     }))
-                root.selectedIndex = Math.min(root.selectedIndex, Math.max(0, root.wallpapers.length - 1))
+
+                const activeIndex = root.wallpapers.findIndex(item => item.path === root.currentWallpaperPath)
+                root.selectedIndex = activeIndex >= 0 ? activeIndex : 0
+                root.refreshMetadata()
+            }
+        }
+    }
+
+    Process {
+        id: metadataScanner
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const fields = this.text.split("|")
+                root.metaResolution = fields[0] || "Unknown"
+                root.metaSize = fields[1] || "Unknown"
+                root.metaFormat = fields[2] || "Unknown"
+                root.metaModified = fields[3] ? fields[3].replace(/ \+.*$/, "") : "Unknown"
             }
         }
     }
@@ -55,7 +112,7 @@ ShellRoot {
         onPressed: root.pickerOpen = !root.pickerOpen
     }
 
-    // Compact workspace menu inspired by the supplied reference.
+    // Compact workspace menu.
     Variants {
         model: Quickshell.screens
 
@@ -141,7 +198,7 @@ ShellRoot {
         }
     }
 
-    // Fullscreen wallpaper carousel: center card, dimmed side previews, gold active state.
+    // Walt-inspired picker, built in Quickshell to match this desktop's colors.
     Variants {
         model: Quickshell.screens
 
@@ -166,7 +223,7 @@ ShellRoot {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: "#0b1012df"
+                    color: "#090b12d9"
 
                     MouseArea {
                         anchors.fill: parent
@@ -174,102 +231,340 @@ ShellRoot {
                     }
                 }
 
-                Item {
-                    id: carousel
+                Rectangle {
+                    id: frame
                     anchors.centerIn: parent
-                    width: Math.min(parent.width - 120, 1460)
-                    height: Math.min(parent.height - 160, 610)
-                    clip: true
+                    width: Math.min(parent.width - 130, 1640)
+                    height: Math.min(parent.height - 130, 980)
+                    radius: 20
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "#e74c8c" }
+                        GradientStop { position: 0.48; color: "#efb842" }
+                        GradientStop { position: 1.0; color: "#41dcd6" }
+                    }
 
-                    Repeater {
-                        model: root.wallpapers
+                    Rectangle {
+                        id: surface
+                        anchors.fill: parent
+                        anchors.margins: 4
+                        radius: 16
+                        color: "#202331"
+
+                        // Prevent clicks in unused dialog space from closing the picker.
+                        MouseArea { anchors.fill: parent }
 
                         Item {
-                            required property var modelData
-                            readonly property int offset: index - root.selectedIndex
-                            readonly property bool selected: offset === 0
+                            id: content
+                            anchors.fill: parent
+                            anchors.margins: 38
+                            z: 1
+                            readonly property real leftWidth: Math.min(width * 0.34, 500)
+                            readonly property real mainHeight: height - 76
 
-                            visible: Math.abs(offset) <= 2
-                            enabled: visible
-                            width: selected ? Math.min(carousel.width * 0.62, 900) : 190
-                            height: selected ? carousel.height - 10 : carousel.height - 66
-                            x: carousel.width / 2 - width / 2 + offset * (carousel.width * 0.36)
-                            y: selected ? 5 : 33
-                            z: selected ? 10 : 5 - Math.abs(offset)
-                            opacity: selected ? 1 : 0.72
+                            Item {
+                                id: libraryColumn
+                                x: 0
+                                y: 0
+                                width: content.leftWidth
+                                height: content.mainHeight
 
-                            Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                            Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                            Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                            Behavior on height { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                            Behavior on opacity { NumberAnimation { duration: 140 } }
+                                Rectangle {
+                                    id: allBox
+                                    width: parent.width
+                                    height: parent.height * 0.61
+                                    radius: 7
+                                    color: "transparent"
+                                    border.width: 2
+                                    border.color: "#e0b633"
 
-                            Rectangle {
-                                anchors.fill: parent
-                                color: "#111827"
-                                border.width: selected ? 4 : 2
-                                border.color: selected ? "#e0a323" : "#d8d0ad"
+                                    Rectangle {
+                                        x: 12
+                                        y: -15
+                                        width: allTitle.implicitWidth + 14
+                                        height: 29
+                                        color: surface.color
+                                    }
 
-                                Image {
-                                    anchors.fill: parent
-                                    anchors.margins: parent.border.width
-                                    source: "file://" + modelData.path
-                                    fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
+                                    Text {
+                                        id: allTitle
+                                        x: 19
+                                        y: -13
+                                        text: "All [Name]"
+                                        color: "#f0c43e"
+                                        font.family: "JetBrainsMono Nerd Font"
+                                        font.bold: true
+                                        font.pixelSize: 20
+                                    }
+
+                                    ListView {
+                                        id: wallpaperList
+                                        anchors.fill: parent
+                                        anchors.margins: 15
+                                        anchors.topMargin: 22
+                                        clip: true
+                                        spacing: 1
+                                        model: root.wallpapers
+                                        currentIndex: root.selectedIndex
+
+                                        delegate: Item {
+                                            required property var modelData
+                                            width: wallpaperList.width
+                                            height: 34
+
+                                            Rectangle {
+                                                anchors.fill: parent
+                                                color: index === root.selectedIndex ? "#2c3040" : "transparent"
+                                                radius: 3
+                                            }
+
+                                            Text {
+                                                anchors.left: parent.left
+                                                anchors.leftMargin: 9
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: (index === root.selectedIndex ? "›  " : "   ") + modelData.name
+                                                color: index === root.selectedIndex ? "#f0c43e" : "#f5f0e4"
+                                                font.family: "JetBrainsMono Nerd Font"
+                                                font.bold: index === root.selectedIndex
+                                                font.pixelSize: 17
+                                                elide: Text.ElideRight
+                                                width: parent.width - 20
+                                            }
+
+                                            Rectangle {
+                                                visible: modelData.path === root.currentWallpaperPath
+                                                anchors.right: parent.right
+                                                anchors.rightMargin: 9
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                width: 10
+                                                height: 10
+                                                radius: 5
+                                                color: "#f0c43e"
+                                            }
+
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: root.selectedIndex = index
+                                                onDoubleClicked: root.applyWallpaper(modelData.path)
+                                            }
+                                        }
+                                    }
                                 }
 
                                 Rectangle {
-                                    visible: selected
-                                    anchors.top: parent.top
-                                    anchors.right: parent.right
-                                    anchors.topMargin: 16
-                                    anchors.rightMargin: 16
-                                    width: 80
-                                    height: 34
-                                    radius: 18
-                                    color: "#dfa324"
+                                    id: folderBox
+                                    anchors.top: allBox.bottom
+                                    anchors.topMargin: 32
+                                    width: parent.width
+                                    height: parent.height - allBox.height - 32
+                                    radius: 7
+                                    color: "transparent"
+                                    border.width: 2
+                                    border.color: "#ad80e4"
+
+                                    Rectangle {
+                                        x: 12
+                                        y: -15
+                                        width: folderTitle.implicitWidth + 14
+                                        height: 29
+                                        color: surface.color
+                                    }
 
                                     Text {
-                                        anchors.centerIn: parent
-                                        text: "ACTIVE"
-                                        color: "#1a1d1d"
+                                        id: folderTitle
+                                        x: 19
+                                        y: -13
+                                        text: "Folder [" + root.wallpapers.length + " walls]"
+                                        color: "#e6ae63"
                                         font.family: "JetBrainsMono Nerd Font"
                                         font.bold: true
-                                        font.pixelSize: 12
+                                        font.pixelSize: 20
+                                    }
+
+                                    Text {
+                                        anchors.fill: parent
+                                        anchors.margins: 24
+                                        anchors.topMargin: 28
+                                        text: "›  " + (root.selectedWallpaper() ? root.selectedWallpaper().name : "No wallpapers")
+                                            + "\n\n   " + root.wallpaperDirectory
+                                            + "\n\n   Double-click or press Enter to apply."
+                                        color: "#f5f0e4"
+                                        font.family: "JetBrainsMono Nerd Font"
+                                        font.pixelSize: 15
+                                        wrapMode: Text.Wrap
                                     }
                                 }
                             }
 
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.selectedIndex = index
-                                    root.applyWallpaper(modelData.path)
+                            Item {
+                                id: detailsColumn
+                                x: content.leftWidth + 34
+                                y: 0
+                                width: content.width - x
+                                height: content.mainHeight
+
+                                Rectangle {
+                                    id: previewBox
+                                    width: parent.width
+                                    height: parent.height * 0.62
+                                    radius: 7
+                                    color: "transparent"
+                                    border.width: 2
+                                    border.color: "#ad80e4"
+
+                                    Rectangle {
+                                        x: 12
+                                        y: -15
+                                        width: previewTitle.implicitWidth + 14
+                                        height: 29
+                                        color: surface.color
+                                    }
+
+                                    Text {
+                                        id: previewTitle
+                                        x: 19
+                                        y: -13
+                                        text: "Preview"
+                                        color: "#e6ae63"
+                                        font.family: "JetBrainsMono Nerd Font"
+                                        font.bold: true
+                                        font.pixelSize: 20
+                                    }
+
+                                    Image {
+                                        anchors.fill: parent
+                                        anchors.margins: 16
+                                        source: root.selectedWallpaper() ? "file://" + root.selectedWallpaper().path : ""
+                                        fillMode: Image.PreserveAspectCrop
+                                        asynchronous: true
+                                    }
+
+                                    Rectangle {
+                                        visible: root.selectedWallpaper() && root.selectedWallpaper().path === root.currentWallpaperPath
+                                        anchors.top: parent.top
+                                        anchors.right: parent.right
+                                        anchors.topMargin: 16
+                                        anchors.rightMargin: 16
+                                        width: 80
+                                        height: 32
+                                        radius: 16
+                                        color: "#e0a323"
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "ACTIVE"
+                                            color: "#1a1d1d"
+                                            font.family: "JetBrainsMono Nerd Font"
+                                            font.bold: true
+                                            font.pixelSize: 12
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    id: metadataBox
+                                    anchors.top: previewBox.bottom
+                                    anchors.topMargin: 32
+                                    width: parent.width
+                                    height: parent.height - previewBox.height - 32
+                                    radius: 7
+                                    color: "transparent"
+                                    border.width: 2
+                                    border.color: "#ad80e4"
+
+                                    Rectangle {
+                                        x: 12
+                                        y: -15
+                                        width: metadataTitle.implicitWidth + 14
+                                        height: 29
+                                        color: surface.color
+                                    }
+
+                                    Text {
+                                        id: metadataTitle
+                                        x: 19
+                                        y: -13
+                                        text: "Metadata"
+                                        color: "#e6ae63"
+                                        font.family: "JetBrainsMono Nerd Font"
+                                        font.bold: true
+                                        font.pixelSize: 20
+                                    }
+
+                                    Text {
+                                        anchors.fill: parent
+                                        anchors.margins: 22
+                                        anchors.topMargin: 27
+                                        textFormat: Text.RichText
+                                        text: "<b><font color='#74d9ee'>File:</font></b> "
+                                            + (root.selectedWallpaper() ? root.selectedWallpaper().name : "—")
+                                            + "<br><b><font color='#74d9ee'>Dir:</font></b> " + root.wallpaperDirectory
+                                            + "<br><b><font color='#74d9ee'>Resolution:</font></b> " + root.metaResolution
+                                            + "&nbsp;&nbsp; <b><font color='#74d9ee'>Size:</font></b> " + root.metaSize
+                                            + "<br><b><font color='#74d9ee'>Modified:</font></b> " + root.metaModified
+                                            + "<br><b><font color='#74d9ee'>Format:</font></b> " + root.metaFormat
+                                        color: "#f5f0e4"
+                                        font.family: "JetBrainsMono Nerd Font"
+                                        font.pixelSize: 15
+                                        wrapMode: Text.WrapAnywhere
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                id: helpBox
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                height: 52
+                                radius: 7
+                                color: "transparent"
+                                border.width: 2
+                                border.color: "#ad80e4"
+
+                                Rectangle {
+                                    x: 12
+                                    y: -15
+                                    width: helpTitle.implicitWidth + 14
+                                    height: 29
+                                    color: surface.color
+                                }
+
+                                Text {
+                                    id: helpTitle
+                                    x: 19
+                                    y: -13
+                                    text: "Help"
+                                    color: "#e6ae63"
+                                    font.family: "JetBrainsMono Nerd Font"
+                                    font.bold: true
+                                    font.pixelSize: 20
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "↑/↓ or j/k  move   |   Enter  apply   |   r  random   |   Esc  close"
+                                    color: "#90a0c8"
+                                    font.family: "JetBrainsMono Nerd Font"
+                                    font.pixelSize: 15
                                 }
                             }
                         }
                     }
-
-                    Text {
-                        anchors.centerIn: parent
-                        visible: root.wallpapers.length === 0
-                        text: "No images in ~/Pictures/Wallpapers"
-                        color: "#d8d0ad"
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: 16
-                    }
                 }
 
                 Keys.onPressed: event => {
-                    if (event.key === Qt.Key_Escape) {
+                    if (event.key === Qt.Key_Escape || event.key === Qt.Key_Q) {
                         root.pickerOpen = false
-                    } else if (event.key === Qt.Key_Left) {
+                    } else if (event.key === Qt.Key_Up || event.key === Qt.Key_K) {
                         root.selectedIndex = Math.max(0, root.selectedIndex - 1)
-                    } else if (event.key === Qt.Key_Right) {
+                    } else if (event.key === Qt.Key_Down || event.key === Qt.Key_J) {
                         root.selectedIndex = Math.min(root.wallpapers.length - 1, root.selectedIndex + 1)
-                    } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && root.wallpapers.length > 0) {
-                        root.applyWallpaper(root.wallpapers[root.selectedIndex].path)
+                    } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && root.selectedWallpaper()) {
+                        root.applyWallpaper(root.selectedWallpaper().path)
+                    } else if (event.key === Qt.Key_R && root.wallpapers.length > 0) {
+                        root.selectedIndex = Math.floor(Math.random() * root.wallpapers.length)
+                        root.applyWallpaper(root.selectedWallpaper().path)
                     } else {
                         return
                     }
