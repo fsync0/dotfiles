@@ -1,0 +1,13 @@
+# Text-only application launcher. Super + R opens this in drun mode.
+show=drun
+allow_images=false
+allow_markup=false
+no_actions=true
+no_custom_entry=true
+insensitive=true
+matching=contains
+width=520
+lines=8
+location=center
+hide_scroll=true
+prompt=Run
