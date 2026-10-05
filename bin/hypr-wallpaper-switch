@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Apply a wallpaper from ~/Pictures/Wallpapers and remember it for the next login.
+set -euo pipefail
+
+wallpaper="${1:?Usage: hypr-wallpaper-switch /absolute/path/to/wallpaper}"
+wallpaper_dir="$HOME/Pictures/Wallpapers/"
+config_file="$HOME/.config/hypr/hyprpaper.conf"
+
+case "$wallpaper" in
+    "$wallpaper_dir"*) ;;
+    *)
+        printf 'Wallpaper must be inside %s\n' "$wallpaper_dir" >&2
+        exit 1
+        ;;
+esac
+
+[[ -f "$wallpaper" ]] || {
+    printf 'Wallpaper not found: %s\n' "$wallpaper" >&2
+    exit 1
+}
+
+escaped_wallpaper="${wallpaper//\\/\\\\}"
+escaped_wallpaper="${escaped_wallpaper//&/\\&}"
+escaped_wallpaper="${escaped_wallpaper//|/\\|}"
+temporary_config="$(mktemp "${config_file}.XXXXXX")"
+trap 'rm -f -- "$temporary_config"' EXIT
+
+sed "s|^    path = .*|    path = $escaped_wallpaper|" "$config_file" > "$temporary_config"
+mv -- "$temporary_config" "$config_file"
+trap - EXIT
+
+hyprctl hyprpaper wallpaper ", $wallpaper, cover"

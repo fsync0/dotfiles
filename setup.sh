@@ -44,6 +44,9 @@ install_file() {
     local source="$1"
     local target="$2"
     local temporary_file=""
+    local mode="0644"
+
+    [[ "$source" == *"hypr-wallpaper-switch" ]] && mode="0755"
 
     if [[ "$source" == *"hyprpaper.conf" ]]; then
         temporary_file="$(mktemp)"
@@ -54,7 +57,7 @@ install_file() {
     mkdir -p "$(dirname -- "$target")"
     if [[ ! -f "$target" ]] || ! cmp -s -- "$source" "$target"; then
         backup_target "$target"
-        install -m 0644 -- "$source" "$target"
+        install -m "$mode" -- "$source" "$target"
         printf 'Installed %s\n' "${target#"$home_dir"/}"
     fi
 
@@ -70,7 +73,12 @@ install_file "$repo_dir/config/fastfetch/config.jsonc" "$home_dir/.config/fastfe
 install_file "$repo_dir/config/wofi/config" "$home_dir/.config/wofi/config"
 install_file "$repo_dir/config/wofi/style.css" "$home_dir/.config/wofi/style.css"
 install_file "$repo_dir/config/quickshell/shell.qml" "$home_dir/.config/quickshell/shell.qml"
-install_file "$repo_dir/assets/ink-wash-pine-wallpaper.jpg" "$home_dir/Pictures/ink-wash-pine-wallpaper.jpg"
+install_file "$repo_dir/bin/hypr-wallpaper-switch" "$home_dir/.local/bin/hypr-wallpaper-switch"
+
+for wallpaper in "$repo_dir"/assets/wallpapers/*; do
+    [[ -f "$wallpaper" ]] || continue
+    install_file "$wallpaper" "$home_dir/Pictures/Wallpapers/$(basename -- "$wallpaper")"
+done
 
 if "$made_backup"; then
     printf 'Previous files backed up to %s\n' "$backup_root"

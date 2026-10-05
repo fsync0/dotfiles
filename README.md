@@ -9,7 +9,9 @@ used by the desktop theme.
 ```text
 hyprland-dotfiles/
 ├── assets/
-│   └── ink-wash-pine-wallpaper.jpg  # Desktop wallpaper
+│   └── wallpapers/                  # Wallpaper collection for the picker
+├── bin/
+│   └── hypr-wallpaper-switch        # Applies and persists a selected wallpaper
 ├── config/
 │   ├── fastfetch/
 │   │   └── config.jsonc             # System-information layout
@@ -30,18 +32,22 @@ hyprland-dotfiles/
 └── setup.sh                         # Idempotent installer and backup helper
 ```
 
-`setup.sh` maps `config/<name>/...` to `~/.config/<name>/...` and copies the
-wallpaper to `~/Pictures/ink-wash-pine-wallpaper.jpg`. The Hyprpaper template
-automatically replaces its home-directory placeholder during installation, so it
-works for a different Linux username too.
+`setup.sh` maps `config/<name>/...` to `~/.config/<name>/...`, installs the
+wallpaper collection into `~/Pictures/Wallpapers/`, and installs the wallpaper
+switching helper in `~/.local/bin/`. The Hyprpaper template automatically replaces
+its home-directory placeholder during installation, so it works for a different
+Linux username too.
 
-The Quickshell workspace menu appears in the top-left.
+The Quickshell workspace menu appears in the top-left. Press `Super + Shift + W`
+to open the wallpaper carousel. It automatically scans `~/Pictures/Wallpapers/`,
+so add PNG, JPG, JPEG, or WebP files there to make them available. Click a preview
+to apply it, or use the arrow keys followed by `Enter`; press `Esc` to cancel.
 
 ## Restore on a new machine
 
 ```sh
-git clone https://github.com/YOUR-USER/hyprland-dotfiles.git
-cd hyprland-dotfiles
+git clone https://github.com/fsync0/dotfiles.git
+cd dotfiles
 ./setup.sh --install-packages
 ```
 
