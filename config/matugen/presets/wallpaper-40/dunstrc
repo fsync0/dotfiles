@@ -19,7 +19,7 @@
     horizontal_padding = 12
     text_icon_padding = 8
     frame_width = 2
-    frame_color = "#ffb4a8"
+    frame_color = "#d1c4bd"
     separator_color = frame
     sort = yes
     idle_threshold = 120
@@ -53,19 +53,19 @@
     mouse_right_click = close_all
 
 [urgency_low]
-    background = "#341e1b"
-    foreground = "#ffe9e5"
-    frame_color = "#89635d"
+    background = "#252323"
+    foreground = "#f2edeb"
+    frame_color = "#746b65"
     timeout = 5
 
 [urgency_normal]
-    background = "#341e1b"
-    foreground = "#ffe9e5"
-    frame_color = "#ffb4a8"
+    background = "#252323"
+    foreground = "#f2edeb"
+    frame_color = "#d1c4bd"
     timeout = 8
 
 [urgency_critical]
-    background = "#341e1b"
-    foreground = "#ffe9e5"
+    background = "#252323"
+    foreground = "#f2edeb"
     frame_color = "#ffb4ab"
     timeout = 0
