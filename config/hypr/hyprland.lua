@@ -100,6 +100,7 @@ end
 -- Applications and session controls.
 hl.bind(main_mod .. " + Return", hl.dsp.exec_cmd(terminal))
 hl.bind(main_mod .. " + B", hl.dsp.exec_cmd("firefox"))
+hl.bind(main_mod .. " + C", hl.dsp.exec_cmd("codium"))
 hl.bind(main_mod .. " + E", hl.dsp.exec_cmd(file_manager))
 hl.bind(main_mod .. " + R", hl.dsp.exec_cmd(launcher))
 hl.bind(main_mod .. " + SHIFT + W", hl.dsp.global("quickshell:wallpaper-picker"))
