@@ -5,7 +5,7 @@ window {
     border: 2px solid @primary;
     border-radius: 0;
     font-family: "JetBrainsMono Nerd Font";
-    font-size: 14px;
+    font-size: 12px;
 }
 
 #input {

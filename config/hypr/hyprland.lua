@@ -6,13 +6,13 @@ local file_manager = "dolphin"
 local launcher = "wofi --show drun"
 local main_mod = "SUPER"
 
--- Use the display's preferred mode and scale. Add a specific rule here only
--- when you need a non-default layout for an external display.
+-- Keep applications compact and consistent instead of accepting automatic
+-- fractional scaling, which makes toolkit text unnecessarily large here.
 hl.monitor({
     output = "",
     mode = "preferred",
     position = "auto",
-    scale = "auto",
+    scale = "1",
 })
 
 hl.env("XCURSOR_SIZE", "24")
