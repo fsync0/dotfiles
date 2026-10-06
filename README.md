@@ -37,7 +37,7 @@ hyprland-dotfiles/
 │   │   └── shell.qml                # Top-left menu and wallpaper manager
 │   ├── vim/                         # Shared Kitty-palette loader for Vim/Neovim
 │   ├── nvim/
-│   │   └── init.vim                 # Loads the shared wallpaper theme
+│   │   └── init.lua                 # Wallpaper-aware BufferLine tabs
 │   └── wofi/
 │       ├── config                   # Text-only application runner behavior
 │       ├── colors.css               # Generated launcher palette
