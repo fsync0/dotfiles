@@ -59,17 +59,24 @@ vim.diagnostic.config({
 
 vim.api.nvim_create_autocmd("LspAttach", {
   callback = function(event)
-    local options = { buffer = event.buf, silent = true }
-    vim.keymap.set("n", "gd", vim.lsp.buf.definition, options)
-    vim.keymap.set("n", "gD", vim.lsp.buf.declaration, options)
-    vim.keymap.set("n", "gr", vim.lsp.buf.references, options)
-    vim.keymap.set("n", "gi", vim.lsp.buf.implementation, options)
-    vim.keymap.set("n", "K", vim.lsp.buf.hover, options)
-    vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, options)
-    vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, options)
+    local function map(mode, keys, action, description)
+      vim.keymap.set(mode, keys, action, {
+        buffer = event.buf,
+        silent = true,
+        desc = description,
+      })
+    end
+
+    map("n", "gd", vim.lsp.buf.definition, "Go to definition")
+    map("n", "gD", vim.lsp.buf.declaration, "Go to declaration")
+    map("n", "gr", vim.lsp.buf.references, "Show references")
+    map("n", "gi", vim.lsp.buf.implementation, "Go to implementation")
+    map("n", "K", vim.lsp.buf.hover, "Show documentation")
+    map("n", "<leader>rn", vim.lsp.buf.rename, "Rename symbol")
+    map({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, "Code action")
     vim.keymap.set("n", "<leader>cf", function()
       vim.lsp.buf.format({ async = true })
-    end, options)
+    end, { buffer = event.buf, silent = true, desc = "Format buffer" })
   end,
   desc = "Set LSP buffer shortcuts",
 })
@@ -169,6 +176,28 @@ require("lazy").setup({
         }),
       })
     end,
+  },
+  {
+    "folke/which-key.nvim",
+    event = "VeryLazy",
+    keys = {
+      {
+        "<leader>?",
+        function()
+          require("which-key").show({ global = false })
+        end,
+        desc = "Show buffer keymaps",
+      },
+    },
+    opts = {
+      preset = "modern",
+      delay = 250,
+      win = { border = "rounded" },
+      spec = {
+        { "<leader>c", group = "Code" },
+        { "<leader>r", group = "Refactor" },
+      },
+    },
   },
 }, {
   checker = { enabled = false },
