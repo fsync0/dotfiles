@@ -88,6 +88,7 @@ install_file "$repo_dir/config/gtk-4.0/settings.ini" "$home_dir/.config/gtk-4.0/
 install_file "$repo_dir/config/vim/wallpaper-theme.vim" "$home_dir/.config/vim/wallpaper-theme.vim"
 install_file "$repo_dir/config/vim/vimrc" "$home_dir/.vimrc"
 install_file "$repo_dir/config/nvim/init.lua" "$home_dir/.config/nvim/init.lua"
+install_file "$repo_dir/config/nvim/lazy-lock.json" "$home_dir/.config/nvim/lazy-lock.json"
 install_file "$repo_dir/config/matugen/config.toml" "$home_dir/.config/matugen/config.toml"
 install_file "$repo_dir/config/matugen/templates/hypr-colors.lua" "$home_dir/.config/matugen/templates/hypr-colors.lua"
 install_file "$repo_dir/config/matugen/templates/kitty.conf" "$home_dir/.config/matugen/templates/kitty.conf"

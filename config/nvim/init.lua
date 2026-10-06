@@ -47,6 +47,33 @@ local function apply_tabline_colors()
   set(0, "BufferLineIndicatorSelected", { fg = colors.color0, bg = colors.color0 })
 end
 
+local lsp_servers = { "lua_ls", "pyright", "ts_ls", "bashls", "jsonls", "yamlls" }
+
+vim.diagnostic.config({
+  severity_sort = true,
+  underline = true,
+  update_in_insert = false,
+  virtual_text = { prefix = "●", spacing = 2 },
+  float = { border = "rounded", source = "if_many" },
+})
+
+vim.api.nvim_create_autocmd("LspAttach", {
+  callback = function(event)
+    local options = { buffer = event.buf, silent = true }
+    vim.keymap.set("n", "gd", vim.lsp.buf.definition, options)
+    vim.keymap.set("n", "gD", vim.lsp.buf.declaration, options)
+    vim.keymap.set("n", "gr", vim.lsp.buf.references, options)
+    vim.keymap.set("n", "gi", vim.lsp.buf.implementation, options)
+    vim.keymap.set("n", "K", vim.lsp.buf.hover, options)
+    vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, options)
+    vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, options)
+    vim.keymap.set("n", "<leader>cf", function()
+      vim.lsp.buf.format({ async = true })
+    end, options)
+  end,
+  desc = "Set LSP buffer shortcuts",
+})
+
 require("lazy").setup({
   {
     "akinsho/bufferline.nvim",
@@ -70,6 +97,77 @@ require("lazy").setup({
         },
       })
       apply_tabline_colors()
+    end,
+  },
+  {
+    "neovim/nvim-lspconfig",
+    lazy = false,
+    dependencies = {
+      { "mason-org/mason.nvim", opts = {} },
+      "mason-org/mason-lspconfig.nvim",
+      "hrsh7th/cmp-nvim-lsp",
+    },
+    config = function()
+      local capabilities = require("cmp_nvim_lsp").default_capabilities()
+      for _, server in ipairs(lsp_servers) do
+        vim.lsp.config(server, { capabilities = capabilities })
+      end
+      vim.lsp.config("lua_ls", {
+        capabilities = capabilities,
+        settings = {
+          Lua = {
+            diagnostics = { globals = { "vim" } },
+            workspace = { checkThirdParty = false },
+          },
+        },
+      })
+      require("mason-lspconfig").setup({
+        ensure_installed = lsp_servers,
+        automatic_enable = lsp_servers,
+      })
+      vim.schedule(function()
+        if vim.bo.filetype ~= "" then
+          vim.api.nvim_exec_autocmds("FileType", {
+            pattern = vim.bo.filetype,
+            modeline = false,
+          })
+        end
+      end)
+    end,
+  },
+  {
+    "hrsh7th/nvim-cmp",
+    event = "InsertEnter",
+    dependencies = {
+      "hrsh7th/cmp-nvim-lsp",
+      "hrsh7th/cmp-buffer",
+      "hrsh7th/cmp-path",
+      "L3MON4D3/LuaSnip",
+      "saadparwaiz1/cmp_luasnip",
+    },
+    config = function()
+      local cmp = require("cmp")
+      cmp.setup({
+        snippet = {
+          expand = function(args)
+            require("luasnip").lsp_expand(args.body)
+          end,
+        },
+        mapping = cmp.mapping.preset.insert({
+          ["<C-Space>"] = cmp.mapping.complete(),
+          ["<C-e>"] = cmp.mapping.abort(),
+          ["<C-j>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select }),
+          ["<C-k>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
+          ["<CR>"] = cmp.mapping.confirm({ select = true }),
+        }),
+        sources = cmp.config.sources({
+          { name = "nvim_lsp" },
+          { name = "luasnip" },
+          { name = "path" },
+        }, {
+          { name = "buffer" },
+        }),
+      })
     end,
   },
 }, {
