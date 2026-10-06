@@ -84,4 +84,10 @@ if command -v matugen >/dev/null 2>&1; then
     hyprctl reload
     dunstctl reload >/dev/null 2>&1 || true
     pkill -SIGUSR1 -x kitty >/dev/null 2>&1 || true
+
+    # A real desktop toast is more useful than Quickshell's terminal log.
+    if command -v dunstify >/dev/null 2>&1; then
+        dunstify -a "Wallpaper" -u low -r 7704 -t 3500 -i "$wallpaper" \
+            "Wallpaper applied" "$wallpaper_id" >/dev/null 2>&1 || true
+    fi
 fi
