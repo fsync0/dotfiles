@@ -45,6 +45,18 @@ local function apply_tabline_colors()
   set(0, "BufferLineModified", { fg = colors.color4, bg = colors.background })
   set(0, "BufferLineModifiedSelected", { fg = colors.color4, bg = colors.color0 })
   set(0, "BufferLineIndicatorSelected", { fg = colors.color0, bg = colors.color0 })
+
+  -- Completion and documentation floats use the same generated palette.
+  set(0, "Pmenu", { fg = colors.foreground, bg = colors.color0 })
+  set(0, "PmenuSel", { fg = colors.background, bg = colors.color4, bold = false })
+  set(0, "PmenuSbar", { bg = colors.selection_background })
+  set(0, "PmenuThumb", { bg = colors.color8 })
+  set(0, "FloatBorder", { fg = colors.color4, bg = colors.color0 })
+  set(0, "CmpItemAbbr", { fg = colors.foreground })
+  set(0, "CmpItemAbbrMatch", { fg = colors.color4, bold = true })
+  set(0, "CmpItemAbbrMatchFuzzy", { fg = colors.color4, bold = true })
+  set(0, "CmpItemKind", { fg = colors.color2 })
+  set(0, "CmpItemMenu", { fg = colors.color8, italic = true })
 end
 
 local lsp_servers = { "lua_ls", "pyright", "ts_ls", "bashls", "jsonls", "yamlls" }
@@ -155,6 +167,24 @@ require("lazy").setup({
     config = function()
       local cmp = require("cmp")
       cmp.setup({
+        completion = {
+          completeopt = "menu,menuone,noinsert",
+        },
+        window = {
+          completion = cmp.config.window.bordered({
+            border = "rounded",
+            winhighlight = "Normal:Pmenu,FloatBorder:FloatBorder,CursorLine:PmenuSel,Search:None",
+            max_width = 54,
+            max_height = 12,
+            side_padding = 1,
+          }),
+          documentation = cmp.config.window.bordered({
+            border = "rounded",
+            winhighlight = "Normal:Pmenu,FloatBorder:FloatBorder",
+            max_width = 68,
+            max_height = 16,
+          }),
+        },
         snippet = {
           expand = function(args)
             require("luasnip").lsp_expand(args.body)
@@ -167,6 +197,18 @@ require("lazy").setup({
           ["<C-k>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
           ["<CR>"] = cmp.mapping.confirm({ select = true }),
         }),
+        formatting = {
+          fields = { "kind", "abbr", "menu" },
+          format = function(entry, item)
+            item.menu = ({
+              nvim_lsp = "[LSP]",
+              luasnip = "[Snippet]",
+              path = "[Path]",
+              buffer = "[Buffer]",
+            })[entry.source.name]
+            return item
+          end,
+        },
         sources = cmp.config.sources({
           { name = "nvim_lsp" },
           { name = "luasnip" },
