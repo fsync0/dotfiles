@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-# Select a fixed desktop profile without coupling it to the wallpaper.
-set -euo pipefail
-
-selected="$(printf '%s\n' alpine ink-wash gothic-rose | wofi --dmenu --prompt 'Theme')"
-[[ -n "$selected" ]] || exit 0
-exec "$HOME/.local/bin/hypr-theme-select" "$selected"

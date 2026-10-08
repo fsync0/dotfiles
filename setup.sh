@@ -46,7 +46,7 @@ install_file() {
     local temporary_file=""
     local mode="0644"
 
-    [[ "$source" == *"hypr-wallpaper-switch" || "$source" == *"hypr-theme-select" || "$source" == *"hypr-theme-menu" ]] && mode="0755"
+    [[ "$source" == *"hypr-wallpaper-switch" ]] && mode="0755"
 
     if [[ "$source" == *"hyprpaper.conf" ]]; then
         temporary_file="$(mktemp)"
@@ -90,19 +90,6 @@ install_file "$repo_dir/config/vim/vimrc" "$home_dir/.vimrc"
 install_file "$repo_dir/config/nvim/init.lua" "$home_dir/.config/nvim/init.lua"
 install_file "$repo_dir/config/nvim/lazy-lock.json" "$home_dir/.config/nvim/lazy-lock.json"
 install_file "$repo_dir/bin/hypr-wallpaper-switch" "$home_dir/.local/bin/hypr-wallpaper-switch"
-install_file "$repo_dir/bin/hypr-theme-select" "$home_dir/.local/bin/hypr-theme-select"
-install_file "$repo_dir/bin/hypr-theme-menu" "$home_dir/.local/bin/hypr-theme-menu"
-
-while IFS= read -r -d '' theme_template; do
-    theme_relative="${theme_template#"$repo_dir/config/themes/templates/"}"
-    install_file "$theme_template" "$home_dir/.config/hypr/themes/templates/$theme_relative"
-done < <(find "$repo_dir/config/themes/templates" -type f -print0)
-
-# A new installation starts from the light ink-wash rice. Existing installs
-# retain the currently selected profile until the user changes it explicitly.
-if [[ ! -f "$home_dir/.config/hypr/active-theme" ]]; then
-    "$home_dir/.local/bin/hypr-theme-select" ink-wash
-fi
 
 for wallpaper in "$repo_dir"/assets/wallpapers/*; do
     [[ -f "$wallpaper" ]] || continue
@@ -113,4 +100,4 @@ if "$made_backup"; then
     printf 'Previous files backed up to %s\n' "$backup_root"
 fi
 
-printf 'Done. Wallpapers and fixed theme profiles are independent.\n'
+printf 'Done. Wallpapers use the fixed Alpine color palette.\n'

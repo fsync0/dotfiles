@@ -1,7 +1,0 @@
-/* Fixed manual theme. Managed by hypr-theme-select. */
-@define-color background @background@;
-@define-color surface @surface@;
-@define-color foreground @foreground@;
-@define-color muted @muted@;
-@define-color primary @primary@;
-@define-color selection @primary_container@;

@@ -33,8 +33,7 @@ trap - EXIT
 
 hyprctl hyprpaper wallpaper ", $wallpaper, cover"
 
-# Wallpapers and fixed theme profiles are independent by design. Selecting a
-# wallpaper never guesses or regenerates colors; use hypr-theme-select instead.
+# Wallpapers never change the fixed Alpine color palette.
 if command -v dunstify >/dev/null 2>&1; then
     dunstify -a "Wallpaper" -u low -r 7704 -t 3500 -i "$wallpaper" \
         "Wallpaper applied" "$wallpaper_id" >/dev/null 2>&1 || true
