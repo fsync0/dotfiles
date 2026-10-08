@@ -113,13 +113,6 @@ if [[ "${HYPR_THEME_NO_RELOAD:-0}" != "1" ]]; then
     dunstctl reload >/dev/null 2>&1 || true
     pkill -SIGUSR1 -x kitty >/dev/null 2>&1 || true
 
-    # Quickshell watches its config on current versions; restarting only if it is
-    # already running makes the palette update immediate while preserving the bar.
-    if pgrep -x quickshell >/dev/null 2>&1; then
-        quickshell kill >/dev/null 2>&1 || true
-        nohup quickshell >/dev/null 2>&1 &
-    fi
-
     if command -v dunstify >/dev/null 2>&1; then
         dunstify -a "Theme" -u low -r 7705 -t 3000 "Theme applied" "$theme" >/dev/null 2>&1 || true
     fi
