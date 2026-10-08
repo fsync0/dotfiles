@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import Quickshell.Services.UPower
 
 ShellRoot {
     id: root
@@ -257,6 +258,53 @@ ShellRoot {
                 Text {
                     height: parent.height
                     text: ""
+                    color: theme.terminalGlass
+                    font.family: "JetBrainsMono Nerd Font"
+                    font.pixelSize: parent.height
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+
+            // Powerline-style battery block, centered on the bar.
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                height: parent.height
+                spacing: 0
+                visible: UPower.displayDevice.ready && UPower.displayDevice.isLaptopBattery
+
+                Text {
+                    height: parent.height
+                    text: ""
+                    color: theme.terminalGlass
+                    font.family: "JetBrainsMono Nerd Font"
+                    font.pixelSize: parent.height
+                    verticalAlignment: Text.AlignVCenter
+                }
+
+                Rectangle {
+                    height: parent.height
+                    width: batteryText.implicitWidth
+                    color: theme.terminalGlass
+
+                    Text {
+                        id: batteryText
+                        anchors.centerIn: parent
+                        text: Math.round(UPower.displayDevice.percentage * 100)
+                        color: UPower.displayDevice.percentage <= 0.20
+                            ? "#BC4F4F"
+                            : UPower.displayDevice.percentage <= 0.50
+                                ? "#E9C46A"
+                                : theme.terminalPromptLight
+                        font.family: "JetBrainsMono Nerd Font"
+                        font.pixelSize: 14
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                }
+
+                Text {
+                    height: parent.height
+                    text: ""
                     color: theme.terminalGlass
                     font.family: "JetBrainsMono Nerd Font"
                     font.pixelSize: parent.height
