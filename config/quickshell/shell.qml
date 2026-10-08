@@ -156,7 +156,8 @@ ShellRoot {
             }
 
             Row {
-                x: 12
+                // Align the workspace list with Hyprland's 22 px outer window gap.
+                x: 22
                 height: parent.height - 3
                 spacing: 8
 
