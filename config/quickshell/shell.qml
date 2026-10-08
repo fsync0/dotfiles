@@ -243,7 +243,9 @@ ShellRoot {
                             width: 14
                             height: parent.height
                             text: "~"
-                            color: theme.terminalPromptLight
+                            color: Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id > 5
+                                ? "#f5c542"
+                                : theme.terminalPromptLight
                             font.family: "JetBrainsMono Nerd Font"
                             font.pixelSize: 13
                             horizontalAlignment: Text.AlignHCenter
