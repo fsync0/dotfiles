@@ -6,7 +6,7 @@ theme="${1:-}"
 template_root="$HOME/.config/hypr/themes/templates"
 
 usage() {
-    printf 'Usage: %s <theme>\n\nAvailable themes:\n  alpine    black terminals with warm sepia text\n  ink-wash  parchment terminals with dark ink text\n' "$0"
+    printf 'Usage: %s <theme>\n\nAvailable themes:\n  alpine       black terminals with warm sepia text\n  ink-wash     parchment terminals with dark ink text\n  gothic-rose  near-black terminals with ivory and dusty rose\n' "$0"
 }
 
 case "$theme" in
@@ -23,6 +23,13 @@ case "$theme" in
         primary_container="#d6c9a9"; on_primary_container="#102426"
         secondary="#786956"; tertiary="#546d69"; outline="#8e856f"
         outline_variant="#c6bda6"; error="#9e5147"; selection="#d8ccb0"; on_primary="#f7f2e6"
+        ;;
+    gothic-rose)
+        background="#0b0a0a"; surface="#121010"; surface_high="#24201f"
+        foreground="#e0d5c8"; muted="#a89688"; primary="#c0a69c"
+        primary_container="#443735"; on_primary_container="#1b1413"
+        secondary="#a99384"; tertiary="#9b7d77"; outline="#7c6d63"
+        outline_variant="#332d2b"; error="#c4584f"; selection="#5b4945"; on_primary="#1b1413"
         ;;
     -l|--list)
         usage

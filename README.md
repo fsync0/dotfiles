@@ -65,12 +65,14 @@ never generates or guesses a palette. The current fixed profiles are:
 
 - `alpine` — black terminals with warm sepia text, based on the Alpine reference.
 - `ink-wash` — parchment terminals with dark ink text, based on the ink-wash reference.
+- `gothic-rose` — near-black terminals with ivory text and dusty rose accents.
 
 Press `Super + Shift + T` to choose a profile, or apply one directly:
 
 ```sh
 hypr-theme-select alpine
 hypr-theme-select ink-wash
+hypr-theme-select gothic-rose
 ```
 
 Every profile updates Hyprland, Kitty, Wofi, Quickshell, Hyprlock, Dunst, GTK,
