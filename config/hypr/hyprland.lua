@@ -29,7 +29,7 @@ end)
 
 hl.config({
     general = {
-        -- Compact layout with wallpaper-derived frames.
+        -- Compact layout with fixed profile colors.
         gaps_in = 8,
         gaps_out = 22,
         border_size = 0,
@@ -104,6 +104,7 @@ hl.bind(main_mod .. " + C", hl.dsp.exec_cmd("codium"))
 hl.bind(main_mod .. " + E", hl.dsp.exec_cmd(file_manager))
 hl.bind(main_mod .. " + R", hl.dsp.exec_cmd(launcher))
 hl.bind(main_mod .. " + SHIFT + W", hl.dsp.global("quickshell:wallpaper-picker"))
+hl.bind(main_mod .. " + SHIFT + T", hl.dsp.exec_cmd("$HOME/.local/bin/hypr-theme-menu"))
 hl.bind(main_mod .. " + Q", hl.dsp.window.close())
 hl.bind(main_mod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(main_mod .. " + F", hl.dsp.window.fullscreen({ action = "toggle" }))

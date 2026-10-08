@@ -46,7 +46,7 @@ local function apply_tabline_colors()
   set(0, "BufferLineModifiedSelected", { fg = colors.color4, bg = colors.color0 })
   set(0, "BufferLineIndicatorSelected", { fg = colors.color0, bg = colors.color0 })
 
-  -- Completion and documentation floats use the same generated palette.
+  -- Completion and documentation floats use the selected fixed palette.
   set(0, "Pmenu", { fg = colors.foreground, bg = colors.color0 })
   set(0, "PmenuSel", { fg = colors.background, bg = colors.color4, bold = false })
   set(0, "PmenuSbar", { bg = colors.selection_background })
@@ -57,6 +57,18 @@ local function apply_tabline_colors()
   set(0, "CmpItemAbbrMatchFuzzy", { fg = colors.color4, bold = true })
   set(0, "CmpItemKind", { fg = colors.color2 })
   set(0, "CmpItemMenu", { fg = colors.color8, italic = true })
+
+  -- Snacks is intentionally used only for the Space-Space file-picker popup.
+  set(0, "SnacksPickerBorder", { fg = colors.color4, bg = colors.background })
+  set(0, "SnacksPickerTitle", { fg = colors.background, bg = colors.color4, bold = true })
+  set(0, "SnacksPickerInput", { fg = colors.foreground, bg = colors.color0 })
+  set(0, "SnacksPickerInputBorder", { fg = colors.color4, bg = colors.color0 })
+  set(0, "SnacksPickerList", { fg = colors.foreground, bg = colors.background })
+  set(0, "SnacksPickerListBorder", { fg = colors.color4, bg = colors.background })
+  set(0, "SnacksPickerPreview", { fg = colors.foreground, bg = colors.background })
+  set(0, "SnacksPickerPreviewBorder", { fg = colors.color4, bg = colors.background })
+  set(0, "SnacksPickerMatch", { fg = colors.color4, bold = true })
+  set(0, "SnacksPickerDir", { fg = colors.color8 })
 end
 
 local lsp_servers = { "lua_ls", "pyright", "ts_ls", "bashls", "jsonls", "yamlls" }
@@ -242,6 +254,25 @@ require("lazy").setup({
       },
     },
   },
+  {
+    "folke/snacks.nvim",
+    keys = {
+      {
+        "<leader><leader>",
+        function()
+          Snacks.picker.files({ hidden = true })
+        end,
+        desc = "Find files",
+      },
+    },
+    opts = {
+      picker = {
+        enabled = true,
+        ui_select = false,
+        layout = { preset = "default" },
+      },
+    },
+  },
 }, {
   checker = { enabled = false },
   change_detection = { notify = false },
@@ -249,5 +280,5 @@ require("lazy").setup({
 
 vim.api.nvim_create_autocmd("FocusGained", {
   callback = apply_tabline_colors,
-  desc = "Refresh tabline after a wallpaper palette change",
+  desc = "Refresh tabline after a theme change",
 })

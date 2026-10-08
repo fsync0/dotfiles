@@ -1,4 +1,4 @@
-" Shared Vim/Neovim theme. It follows Kitty's Matugen-generated palette.
+" Shared Vim/Neovim theme. It follows the selected fixed Kitty palette.
 if exists('g:loaded_wallpaper_theme')
   finish
 endif

@@ -23,7 +23,7 @@ done
 if "$install_packages"; then
     sudo pacman -S --needed --noconfirm \
         hyprland hyprpaper hypridle hyprlock kitty fastfetch wofi quickshell neovim \
-        dunst matugen networkmanager zathura zathura-pdf-poppler
+        dunst networkmanager zathura zathura-pdf-poppler
 fi
 
 backup_root="$home_dir/.config-backups/hyprland-dotfiles-$(date +%Y%m%d-%H%M%S)"
@@ -46,7 +46,7 @@ install_file() {
     local temporary_file=""
     local mode="0644"
 
-    [[ "$source" == *"hypr-wallpaper-switch" ]] && mode="0755"
+    [[ "$source" == *"hypr-wallpaper-switch" || "$source" == *"hypr-theme-select" || "$source" == *"hypr-theme-menu" ]] && mode="0755"
 
     if [[ "$source" == *"hyprpaper.conf" ]]; then
         temporary_file="$(mktemp)"
@@ -89,23 +89,20 @@ install_file "$repo_dir/config/vim/wallpaper-theme.vim" "$home_dir/.config/vim/w
 install_file "$repo_dir/config/vim/vimrc" "$home_dir/.vimrc"
 install_file "$repo_dir/config/nvim/init.lua" "$home_dir/.config/nvim/init.lua"
 install_file "$repo_dir/config/nvim/lazy-lock.json" "$home_dir/.config/nvim/lazy-lock.json"
-install_file "$repo_dir/config/matugen/config.toml" "$home_dir/.config/matugen/config.toml"
-install_file "$repo_dir/config/matugen/templates/hypr-colors.lua" "$home_dir/.config/matugen/templates/hypr-colors.lua"
-install_file "$repo_dir/config/matugen/templates/kitty.conf" "$home_dir/.config/matugen/templates/kitty.conf"
-install_file "$repo_dir/config/matugen/templates/wofi.css" "$home_dir/.config/matugen/templates/wofi.css"
-install_file "$repo_dir/config/matugen/templates/DynamicTheme.qml" "$home_dir/.config/matugen/templates/DynamicTheme.qml"
-install_file "$repo_dir/config/matugen/templates/hyprlock-colors.conf" "$home_dir/.config/matugen/templates/hyprlock-colors.conf"
-install_file "$repo_dir/config/matugen/templates/dunstrc" "$home_dir/.config/matugen/templates/dunstrc"
-install_file "$repo_dir/config/matugen/templates/gtk-colors.css" "$home_dir/.config/matugen/templates/gtk-colors.css"
-
-# Each numbered wallpaper has a checked-in, exact palette. Keep the files together
-# so a fresh install gets identical colors without having to regenerate them.
-while IFS= read -r -d '' preset_file; do
-    preset_relative="${preset_file#"$repo_dir/config/matugen/presets/"}"
-    install_file "$preset_file" "$home_dir/.config/matugen/presets/$preset_relative"
-done < <(find "$repo_dir/config/matugen/presets" -type f -print0)
-
 install_file "$repo_dir/bin/hypr-wallpaper-switch" "$home_dir/.local/bin/hypr-wallpaper-switch"
+install_file "$repo_dir/bin/hypr-theme-select" "$home_dir/.local/bin/hypr-theme-select"
+install_file "$repo_dir/bin/hypr-theme-menu" "$home_dir/.local/bin/hypr-theme-menu"
+
+while IFS= read -r -d '' theme_template; do
+    theme_relative="${theme_template#"$repo_dir/config/themes/templates/"}"
+    install_file "$theme_template" "$home_dir/.config/hypr/themes/templates/$theme_relative"
+done < <(find "$repo_dir/config/themes/templates" -type f -print0)
+
+# A new installation starts from the light ink-wash rice. Existing installs
+# retain the currently selected profile until the user changes it explicitly.
+if [[ ! -f "$home_dir/.config/hypr/active-theme" ]]; then
+    "$home_dir/.local/bin/hypr-theme-select" ink-wash
+fi
 
 for wallpaper in "$repo_dir"/assets/wallpapers/*; do
     [[ -f "$wallpaper" ]] || continue
@@ -116,4 +113,4 @@ if "$made_backup"; then
     printf 'Previous files backed up to %s\n' "$backup_root"
 fi
 
-printf 'Done. The wallpaper switcher now refreshes the Matugen palette automatically.\n'
+printf 'Done. Wallpapers and fixed theme profiles are independent.\n'

@@ -1,7 +1,7 @@
 # Hyprland dotfiles
 
 Personal Arch Linux desktop configuration for Hyprland, Kitty, Fastfetch, Wofi,
-Hyprpaper, Hypridle, Hyprlock, Dunst, Quickshell, and Matugen. It includes the
+Hyprpaper, Hypridle, Hyprlock, Dunst, and Quickshell. It includes the
 ink-wash wallpaper used by the desktop theme.
 
 ## Repository layout
@@ -11,36 +11,35 @@ hyprland-dotfiles/
 ├── assets/
 │   └── wallpapers/                  # Wallpaper collection for the picker
 ├── bin/
-│   └── hypr-wallpaper-switch        # Applies and persists a selected wallpaper
+│   ├── hypr-theme-menu               # Fixed-theme chooser
+│   ├── hypr-theme-select             # Applies a named fixed theme profile
+│   └── hypr-wallpaper-switch         # Applies and persists a selected wallpaper
 ├── config/
 │   ├── dunst/
-│   │   └── dunstrc                 # Wallpaper-derived notification colors
+│   │   └── dunstrc                 # Fixed-profile notification colors
 │   ├── fastfetch/
 │   │   └── config.jsonc             # System-information layout
 │   ├── gtk-3.0/ and gtk-4.0/        # Dynamic color overrides for GTK apps
 │   ├── hypr/
-│   │   ├── colors.lua               # Generated Hyprland border palette
+│   │   ├── colors.lua               # Fixed Hyprland profile palette
 │   │   ├── hypridle.conf            # Idle, lock, and suspend timers
 │   │   ├── hyprland.lua             # Monitors, keybinds, layout, borders
 │   │   ├── hyprlock.conf            # Lock-screen appearance
 │   │   ├── hyprlock-colors.conf     # Generated lock-screen palette
 │   │   └── hyprpaper.conf           # Wallpaper configuration
 │   ├── kitty/
-│   │   ├── dynamic.conf             # Generated terminal palette
-│   │   └── kitty.conf               # Terminal layout and generated palette import
-│   ├── matugen/
-│   │   ├── config.toml              # Palette generator settings
-│   │   ├── presets/                  # Exact palette per wallpaper-XX ID
-│   │   └── templates/               # Sources for every generated color file
+│   │   ├── dynamic.conf             # Fixed terminal palette
+│   │   └── kitty.conf               # Terminal layout and palette import
 │   ├── quickshell/
-│   │   ├── DynamicTheme.qml         # Generated shell color palette
+│   │   ├── DynamicTheme.qml         # Fixed shell profile palette
 │   │   └── shell.qml                # Top-left menu and wallpaper manager
+│   ├── themes/templates/             # Shared fixed-profile output templates
 │   ├── vim/                         # Shared Kitty-palette loader for Vim/Neovim
 │   ├── nvim/
 │   │   └── init.lua                 # Wallpaper-aware BufferLine tabs
 │   └── wofi/
 │       ├── config                   # Text-only application runner behavior
-│       ├── colors.css               # Generated launcher palette
+│       ├── colors.css               # Fixed launcher palette
 │       └── style.css                # Application runner appearance
 ├── .gitignore
 ├── README.md
@@ -59,24 +58,24 @@ to open the Walt-inspired wallpaper manager. It automatically scans
 available. Use `↑/↓` or `j/k` to choose an image, `Enter` to apply it, `r` for a
 random wallpaper, and `Esc` to close. Double-clicking an entry also applies it.
 
-## Wallpaper-driven colors
+## Fixed rice profiles
 
-Each wallpaper has a stable ID such as `wallpaper-01.jpg`; its exact matching
-palette lives in `config/matugen/presets/wallpaper-01/`. Selecting a known
-wallpaper restores its checked-in palette, which makes its colors repeatable
-across reinstalls. A newly added image is analyzed once with Matugen and receives
-its own preset folder automatically.
+Wallpaper selection and colors are deliberately independent: choosing a wallpaper
+never generates or guesses a palette. The current fixed profiles are:
 
-The shared palette is applied to Hyprland, Kitty, Wofi, Quickshell, Hyprlock,
-Dunst, GTK, and Vim/Neovim. Vim and Neovim read Kitty's current generated
-palette at startup and whenever they regain focus, so an already-open editor
-updates after switching wallpaper. Existing GUI apps may need reopening to pick
-up new GTK colors; the other components reload automatically. You can regenerate
-the active palette manually with:
+- `alpine` — black terminals with warm sepia text, based on the Alpine reference.
+- `ink-wash` — parchment terminals with dark ink text, based on the ink-wash reference.
+
+Press `Super + Shift + T` to choose a profile, or apply one directly:
 
 ```sh
-matugen image "$(sed -n 's/^    path = //p' ~/.config/hypr/hyprpaper.conf)"
+hypr-theme-select alpine
+hypr-theme-select ink-wash
 ```
+
+Every profile updates Hyprland, Kitty, Wofi, Quickshell, Hyprlock, Dunst, GTK,
+and the palette read by Vim/Neovim. Quickshell itself—including the top bar and
+wallpaper manager—remains enabled.
 
 ## Restore on a new machine
 
@@ -86,8 +85,8 @@ cd dotfiles
 ./setup.sh --install-packages
 ```
 
-`--install-packages` installs the needed Arch packages—including Matugen—with
-`pacman`. Omit it if they are already installed:
+`--install-packages` installs the needed Arch packages with `pacman`. Omit it if
+they are already installed:
 
 ```sh
 ./setup.sh

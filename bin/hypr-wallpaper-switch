@@ -5,43 +5,8 @@ set -euo pipefail
 wallpaper="${1:?Usage: hypr-wallpaper-switch /absolute/path/to/wallpaper}"
 wallpaper_dir="$HOME/Pictures/Wallpapers/"
 config_file="$HOME/.config/hypr/hyprpaper.conf"
-preset_root="$HOME/.config/matugen/presets"
 wallpaper_id="$(basename -- "$wallpaper")"
 wallpaper_id="${wallpaper_id%.*}"
-preset_dir="$preset_root/$wallpaper_id"
-
-preset_complete() {
-    local preset_file
-    for preset_file in \
-        hypr-colors.lua kitty-dynamic.conf wofi-colors.css DynamicTheme.qml \
-        hyprlock-colors.conf dunstrc gtk-3-colors.css gtk-4-colors.css source.sha256; do
-        [[ -f "$preset_dir/$preset_file" ]] || return 1
-    done
-}
-
-restore_preset() {
-    install -m 0644 "$preset_dir/hypr-colors.lua" "$HOME/.config/hypr/colors.lua"
-    install -m 0644 "$preset_dir/kitty-dynamic.conf" "$HOME/.config/kitty/dynamic.conf"
-    install -m 0644 "$preset_dir/wofi-colors.css" "$HOME/.config/wofi/colors.css"
-    install -m 0644 "$preset_dir/DynamicTheme.qml" "$HOME/.config/quickshell/DynamicTheme.qml"
-    install -m 0644 "$preset_dir/hyprlock-colors.conf" "$HOME/.config/hypr/hyprlock-colors.conf"
-    install -m 0644 "$preset_dir/dunstrc" "$HOME/.config/dunst/dunstrc"
-    install -m 0644 "$preset_dir/gtk-3-colors.css" "$HOME/.config/gtk-3.0/matugen-colors.css"
-    install -m 0644 "$preset_dir/gtk-4-colors.css" "$HOME/.config/gtk-4.0/matugen-colors.css"
-}
-
-save_preset() {
-    mkdir -p -- "$preset_dir"
-    install -m 0644 "$HOME/.config/hypr/colors.lua" "$preset_dir/hypr-colors.lua"
-    install -m 0644 "$HOME/.config/kitty/dynamic.conf" "$preset_dir/kitty-dynamic.conf"
-    install -m 0644 "$HOME/.config/wofi/colors.css" "$preset_dir/wofi-colors.css"
-    install -m 0644 "$HOME/.config/quickshell/DynamicTheme.qml" "$preset_dir/DynamicTheme.qml"
-    install -m 0644 "$HOME/.config/hypr/hyprlock-colors.conf" "$preset_dir/hyprlock-colors.conf"
-    install -m 0644 "$HOME/.config/dunst/dunstrc" "$preset_dir/dunstrc"
-    install -m 0644 "$HOME/.config/gtk-3.0/matugen-colors.css" "$preset_dir/gtk-3-colors.css"
-    install -m 0644 "$HOME/.config/gtk-4.0/matugen-colors.css" "$preset_dir/gtk-4-colors.css"
-    sha256sum -- "$wallpaper" | awk '{print $1}' > "$preset_dir/source.sha256"
-}
 
 case "$wallpaper" in
     "$wallpaper_dir"*) ;;
@@ -68,26 +33,9 @@ trap - EXIT
 
 hyprctl hyprpaper wallpaper ", $wallpaper, cover"
 
-# Refresh the shared desktop palette after the wallpaper is applied. A palette
-# is generated once per wallpaper, then restored exactly on later selections.
-if command -v matugen >/dev/null 2>&1; then
-    wallpaper_hash="$(sha256sum -- "$wallpaper" | awk '{print $1}')"
-
-    if preset_complete && [[ "$(< "$preset_dir/source.sha256")" == "$wallpaper_hash" ]]; then
-        restore_preset
-    elif matugen image "$wallpaper"; then
-        save_preset
-    else
-        exit 1
-    fi
-
-    hyprctl reload
-    dunstctl reload >/dev/null 2>&1 || true
-    pkill -SIGUSR1 -x kitty >/dev/null 2>&1 || true
-
-    # A real desktop toast is more useful than Quickshell's terminal log.
-    if command -v dunstify >/dev/null 2>&1; then
-        dunstify -a "Wallpaper" -u low -r 7704 -t 3500 -i "$wallpaper" \
-            "Wallpaper applied" "$wallpaper_id" >/dev/null 2>&1 || true
-    fi
+# Wallpapers and fixed theme profiles are independent by design. Selecting a
+# wallpaper never guesses or regenerates colors; use hypr-theme-select instead.
+if command -v dunstify >/dev/null 2>&1; then
+    dunstify -a "Wallpaper" -u low -r 7704 -t 3500 -i "$wallpaper" \
+        "Wallpaper applied" "$wallpaper_id" >/dev/null 2>&1 || true
 fi
