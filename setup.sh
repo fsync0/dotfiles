@@ -23,7 +23,7 @@ done
 if "$install_packages"; then
     sudo pacman -S --needed --noconfirm \
         hyprland hyprpaper hypridle hyprlock kitty fastfetch wofi quickshell neovim zsh tmux \
-        dunst networkmanager zathura zathura-pdf-poppler
+        networkmanager zathura zathura-pdf-poppler
 fi
 
 backup_root="$home_dir/.config-backups/hyprland-dotfiles-$(date +%Y%m%d-%H%M%S)"
@@ -116,6 +116,8 @@ install_file "$repo_dir/config/wofi/style.css" "$home_dir/.config/wofi/style.css
 install_file "$repo_dir/config/wofi/colors.css" "$home_dir/.config/wofi/colors.css"
 install_file "$repo_dir/config/quickshell/shell.qml" "$home_dir/.config/quickshell/shell.qml"
 install_file "$repo_dir/config/quickshell/DynamicTheme.qml" "$home_dir/.config/quickshell/DynamicTheme.qml"
+install_file "$repo_dir/config/quickshell/NotificationCenter.qml" "$home_dir/.config/quickshell/NotificationCenter.qml"
+install_file "$repo_dir/config/quickshell/NotificationPopup.qml" "$home_dir/.config/quickshell/NotificationPopup.qml"
 install_file "$repo_dir/config/dunst/dunstrc" "$home_dir/.config/dunst/dunstrc"
 install_file "$repo_dir/config/gtk-3.0/gtk.css" "$home_dir/.config/gtk-3.0/gtk.css"
 install_file "$repo_dir/config/gtk-3.0/matugen-colors.css" "$home_dir/.config/gtk-3.0/matugen-colors.css"

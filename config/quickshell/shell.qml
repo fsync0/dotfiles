@@ -4,11 +4,17 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Services.UPower
+import Quickshell.Services.Notifications
 
 ShellRoot {
     id: root
 
     property bool pickerOpen: false
+    property bool notificationCenterOpen: false
+    property bool notificationPopupVisible: false
+    property int notificationTab: 0
+    property var notificationHistory: notificationHistoryModel
+    property var notificationPopup: null
     property int selectedIndex: 0
     property var wallpapers: []
     property string currentWallpaperPath: ""
@@ -24,6 +30,96 @@ ShellRoot {
     SystemClock {
         id: clock
         precision: SystemClock.Seconds
+    }
+
+    ListModel {
+        id: notificationHistoryModel
+    }
+
+    function addNotification(notification) {
+        notification.tracked = true
+        notificationPopup = notification
+        notificationPopupVisible = true
+        notificationPopupTimer.restart()
+
+        if (!notification.transient) {
+            notificationHistory.insert(0, {
+                notification: notification,
+                receivedAt: Date.now()
+            })
+        }
+    }
+
+    function clearNotifications() {
+        const tracked = []
+        for (let index = 0; index < notificationHistory.count; index += 1) {
+            const entry = notificationHistory.get(index)
+            if (entry && entry.notification)
+                tracked.push(entry.notification)
+        }
+        notificationHistory.clear()
+        notificationPopupVisible = false
+        notificationPopup = null
+
+        for (const notification of tracked)
+            notification.tracked = false
+    }
+
+    function removeNotification(index) {
+        const entry = notificationHistory.get(index)
+        notificationHistory.remove(index)
+        if (entry && entry.notification)
+            entry.notification.tracked = false
+    }
+
+    function hideNotificationPopup() {
+        const notification = notificationPopup
+        notificationPopupVisible = false
+        notificationPopup = null
+        if (notification && notification.transient)
+            notification.tracked = false
+    }
+
+    function notificationMatchesTab(receivedAt) {
+        const now = clock.date
+        const received = new Date(receivedAt)
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+        const age = now.getTime() - received.getTime()
+
+        if (notificationTab === 0)
+            return received.getTime() >= startOfToday
+        if (notificationTab === 1)
+            return received.getTime() >= startOfToday - (6 * 24 * 60 * 60 * 1000)
+        return age >= 7 * 24 * 60 * 60 * 1000
+    }
+
+    function relativeNotificationTime(receivedAt) {
+        const seconds = Math.max(0, Math.floor((clock.date.getTime() - receivedAt) / 1000))
+        if (seconds < 60)
+            return "now"
+        if (seconds < 3600)
+            return Math.floor(seconds / 60) + "m ago"
+        if (seconds < 86400)
+            return Math.floor(seconds / 3600) + "h ago"
+        return Math.floor(seconds / 86400) + "d ago"
+    }
+
+    NotificationServer {
+        id: notificationServer
+        keepOnReload: false
+        persistenceSupported: true
+        bodyMarkupSupported: true
+        actionsSupported: true
+        actionIconsSupported: true
+        imageSupported: true
+        onNotification: notification => root.addNotification(notification)
+    }
+
+    Timer {
+        id: notificationPopupTimer
+        interval: 3000
+        repeat: false
+        onTriggered: root.hideNotificationPopup()
     }
 
     function selectedWallpaper() {
@@ -141,6 +237,34 @@ ShellRoot {
         name: "wallpaper-picker"
         description: "Open the wallpaper picker"
         onPressed: root.pickerOpen = !root.pickerOpen
+    }
+
+    GlobalShortcut {
+        name: "notification-center"
+        description: "Open the notification center"
+        onPressed: root.notificationCenterOpen = !root.notificationCenterOpen
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        NotificationCenter {
+            required property var modelData
+            targetScreen: modelData
+            shellRoot: root
+            themePalette: theme
+        }
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        NotificationPopup {
+            required property var modelData
+            targetScreen: modelData
+            shellRoot: root
+            themePalette: theme
+        }
     }
 
     // Compact workspace menu.
