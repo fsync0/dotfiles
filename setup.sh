@@ -22,7 +22,7 @@ done
 
 if "$install_packages"; then
     sudo pacman -S --needed --noconfirm \
-        hyprland hyprpaper hypridle hyprlock kitty fastfetch wofi quickshell neovim zsh \
+        hyprland hyprpaper hypridle hyprlock kitty fastfetch wofi quickshell neovim zsh tmux \
         dunst networkmanager zathura zathura-pdf-poppler
 fi
 
@@ -83,6 +83,25 @@ install_powerlevel10k() {
     git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$target"
 }
 
+install_tmux_plugin_manager() {
+    local target="$home_dir/.config/tmux/plugins/tpm"
+
+    [[ -x "$target/tpm" ]] && return
+
+    if [[ -e "$target" ]]; then
+        printf 'TPM target exists but is incomplete: %s\n' "$target" >&2
+        return 1
+    fi
+
+    command -v git >/dev/null 2>&1 || {
+        printf 'Git is required to install TPM.\n' >&2
+        return 1
+    }
+
+    mkdir -p "$(dirname -- "$target")"
+    git clone --depth=1 https://github.com/tmux-plugins/tpm.git "$target"
+}
+
 install_file "$repo_dir/config/hypr/hyprland.lua" "$home_dir/.config/hypr/hyprland.lua"
 install_file "$repo_dir/config/hypr/colors.lua" "$home_dir/.config/hypr/colors.lua"
 install_file "$repo_dir/config/hypr/hypridle.conf" "$home_dir/.config/hypr/hypridle.conf"
@@ -108,10 +127,16 @@ install_file "$repo_dir/config/vim/wallpaper-theme.vim" "$home_dir/.config/vim/w
 install_file "$repo_dir/config/vim/vimrc" "$home_dir/.vimrc"
 install_file "$repo_dir/config/nvim/init.lua" "$home_dir/.config/nvim/init.lua"
 install_file "$repo_dir/config/nvim/lazy-lock.json" "$home_dir/.config/nvim/lazy-lock.json"
+install_file "$repo_dir/config/tmux/tmux.conf" "$home_dir/.config/tmux/tmux.conf"
+install_file "$repo_dir/config/tmux/theme.conf" "$home_dir/.config/tmux/theme.conf"
+install_file "$repo_dir/config/tmux/statusline.conf" "$home_dir/.config/tmux/statusline.conf"
+install_file "$repo_dir/config/tmux/utility.conf" "$home_dir/.config/tmux/utility.conf"
+install_file "$repo_dir/config/tmux/macos.conf" "$home_dir/.config/tmux/macos.conf"
 install_file "$repo_dir/config/zsh/zshrc" "$home_dir/.zshrc"
 install_file "$repo_dir/config/zsh/p10k.zsh" "$home_dir/.p10k.zsh"
 install_file "$repo_dir/bin/hypr-wallpaper-switch" "$home_dir/.local/bin/hypr-wallpaper-switch"
 install_powerlevel10k
+install_tmux_plugin_manager
 
 for wallpaper in "$repo_dir"/assets/wallpapers/*; do
     [[ -f "$wallpaper" ]] || continue
