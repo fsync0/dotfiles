@@ -32,10 +32,10 @@ hl.config({
         -- Compact layout with fixed profile colors.
         gaps_in = 8,
         gaps_out = 22,
-        border_size = 0,
+        border_size = 1,
         col = {
-            active_border = "rgba(" .. colors.primary .. "ff)",
-            inactive_border = "rgba(" .. colors.outline_variant .. "ff)",
+            active_border = "rgba(585858ff)",
+            inactive_border = "rgba(585858ff)",
         },
         resize_on_border = false,
         allow_tearing = false,
