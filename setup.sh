@@ -22,7 +22,7 @@ done
 
 if "$install_packages"; then
     sudo pacman -S --needed --noconfirm \
-        hyprland hyprpaper hypridle hyprlock kitty fastfetch wofi quickshell neovim \
+        hyprland hyprpaper hypridle hyprlock kitty fastfetch wofi quickshell neovim zsh \
         dunst networkmanager zathura zathura-pdf-poppler
 fi
 
@@ -64,6 +64,25 @@ install_file() {
     [[ -z "$temporary_file" ]] || rm -f -- "$temporary_file"
 }
 
+install_powerlevel10k() {
+    local target="$home_dir/.local/share/powerlevel10k"
+
+    [[ -r "$target/powerlevel10k.zsh-theme" ]] && return
+
+    if [[ -e "$target" ]]; then
+        printf 'Powerlevel10k target exists but is incomplete: %s\n' "$target" >&2
+        return 1
+    fi
+
+    command -v git >/dev/null 2>&1 || {
+        printf 'Git is required to install Powerlevel10k.\n' >&2
+        return 1
+    }
+
+    mkdir -p "$(dirname -- "$target")"
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$target"
+}
+
 install_file "$repo_dir/config/hypr/hyprland.lua" "$home_dir/.config/hypr/hyprland.lua"
 install_file "$repo_dir/config/hypr/colors.lua" "$home_dir/.config/hypr/colors.lua"
 install_file "$repo_dir/config/hypr/hypridle.conf" "$home_dir/.config/hypr/hypridle.conf"
@@ -89,7 +108,10 @@ install_file "$repo_dir/config/vim/wallpaper-theme.vim" "$home_dir/.config/vim/w
 install_file "$repo_dir/config/vim/vimrc" "$home_dir/.vimrc"
 install_file "$repo_dir/config/nvim/init.lua" "$home_dir/.config/nvim/init.lua"
 install_file "$repo_dir/config/nvim/lazy-lock.json" "$home_dir/.config/nvim/lazy-lock.json"
+install_file "$repo_dir/config/zsh/zshrc" "$home_dir/.zshrc"
+install_file "$repo_dir/config/zsh/p10k.zsh" "$home_dir/.p10k.zsh"
 install_file "$repo_dir/bin/hypr-wallpaper-switch" "$home_dir/.local/bin/hypr-wallpaper-switch"
+install_powerlevel10k
 
 for wallpaper in "$repo_dir"/assets/wallpapers/*; do
     [[ -f "$wallpaper" ]] || continue
@@ -100,4 +122,4 @@ if "$made_backup"; then
     printf 'Previous files backed up to %s\n' "$backup_root"
 fi
 
-printf 'Done. Wallpapers use the fixed Alpine color palette.\n'
+printf 'Done. Desktop and terminal palettes are fixed independently.\n'

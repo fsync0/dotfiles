@@ -1,0 +1,15 @@
+# Optional Oh My Zsh integration keeps its Git aliases when it is installed.
+if [[ -r "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]]; then
+    export ZSH="$HOME/.oh-my-zsh"
+    ZSH_THEME=""
+    plugins=(git)
+    source "$ZSH/oh-my-zsh.sh"
+fi
+
+export PATH="$HOME/.local/bin:$PATH"
+[[ -d "$HOME/.opencode/bin" ]] && export PATH="$HOME/.opencode/bin:$PATH"
+
+p10k_theme="$HOME/.local/share/powerlevel10k/powerlevel10k.zsh-theme"
+[[ -r "$p10k_theme" ]] || p10k_theme="$HOME/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme"
+[[ -r "$p10k_theme" ]] && source "$p10k_theme"
+[[ -r "$HOME/.p10k.zsh" ]] && source "$HOME/.p10k.zsh"

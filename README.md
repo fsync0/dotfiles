@@ -1,8 +1,8 @@
 # Hyprland dotfiles
 
 Personal Arch Linux desktop configuration for Hyprland, Kitty, Fastfetch, Wofi,
-Hyprpaper, Hypridle, Hyprlock, Dunst, and Quickshell. It includes the
-Alpine theme palette and a wallpaper picker.
+Hyprpaper, Hypridle, Hyprlock, Dunst, Quickshell, and Zsh. It includes an
+Alpine desktop palette, a translucent blue-gray Kitty terminal, and a wallpaper picker.
 
 ## Repository layout
 
@@ -26,14 +26,17 @@ hyprland-dotfiles/
 │   │   ├── hyprlock-colors.conf     # Alpine lock-screen palette
 │   │   └── hyprpaper.conf           # Wallpaper configuration
 │   ├── kitty/
-│   │   ├── dynamic.conf             # Alpine terminal palette
-│   │   └── kitty.conf               # Terminal layout and palette import
+│   │   ├── dynamic.conf             # Blue-gray terminal palette
+│   │   └── kitty.conf               # Translucent terminal layout and palette import
 │   ├── quickshell/
 │   │   ├── DynamicTheme.qml         # Alpine shell palette
 │   │   └── shell.qml                # Top-left menu and wallpaper manager
 │   ├── vim/                         # Shared Kitty-palette loader for Vim/Neovim
 │   ├── nvim/
 │   │   └── init.lua                 # Wallpaper-aware BufferLine tabs
+│   ├── zsh/
+│   │   ├── p10k.zsh                 # Powerlevel10k prompt layout
+│   │   └── zshrc                    # Zsh startup configuration
 │   └── wofi/
 │       ├── config                   # Text-only application runner behavior
 │       ├── colors.css               # Alpine launcher palette
@@ -55,10 +58,12 @@ to open the Walt-inspired wallpaper manager. It automatically scans
 available. Use `↑/↓` or `j/k` to choose an image, `Enter` to apply it, `r` for a
 random wallpaper, and `Esc` to close. Double-clicking an entry also applies it.
 
-## Alpine theme
+## Desktop and terminal themes
 
 The desktop uses one fixed Alpine palette: black surfaces, warm sepia text, and
-muted earth-tone accents. Wallpaper selection never changes the palette.
+muted earth-tone accents. Kitty deliberately uses a blue-gray translucent palette,
+with square corners, a block cursor, and a Powerlevel10k prompt. Wallpaper selection
+never changes either palette.
 
 ## Restore on a new machine
 
@@ -75,9 +80,10 @@ they are already installed:
 ./setup.sh
 ```
 
-The script installs each configuration file into `~/.config` and the wallpaper into
-`~/Pictures`. Before it overwrites a changed file, it saves the previous version in
-`~/.config-backups/hyprland-dotfiles-<timestamp>/`.
+The script installs each configuration file into `~/.config`, the Zsh files into
+your home directory, and the wallpaper into `~/Pictures`. It also downloads
+Powerlevel10k to `~/.local/share/powerlevel10k`. Before it overwrites a changed file,
+it saves the previous version in `~/.config-backups/hyprland-dotfiles-<timestamp>/`.
 
 After installation, reload Hyprland with `Super + Shift + R`, then restart
 Hyprpaper or log out and back in.
