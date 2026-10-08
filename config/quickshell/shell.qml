@@ -20,6 +20,11 @@ ShellRoot {
 
     DynamicTheme { id: theme }
 
+    SystemClock {
+        id: clock
+        precision: SystemClock.Seconds
+    }
+
     function selectedWallpaper() {
         return wallpapers.length > 0 ? wallpapers[selectedIndex] : null
     }
@@ -147,7 +152,11 @@ ShellRoot {
             implicitHeight: 31
             color: "transparent"
             focusable: false
-            exclusiveZone: 7
+            // Reserve an extra 12 px below the panel before Hyprland places windows.
+            exclusiveZone: 19
+            margins {
+                top: 8
+            }
 
             anchors {
                 top: true
@@ -159,65 +168,143 @@ ShellRoot {
                 // Align the workspace list with Hyprland's 22 px outer window gap.
                 x: 22
                 height: parent.height - 3
-                spacing: 8
+                spacing: 0
 
                 Text {
-                    width: 16
                     height: parent.height
-                    text: "󰣇"
-                    color: theme.muted
+                    text: ""
+                    color: theme.terminalGlass
                     font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 14
-                    horizontalAlignment: Text.AlignHCenter
+                    font.pixelSize: parent.height
                     verticalAlignment: Text.AlignVCenter
                 }
 
-                Repeater {
-                    model: Hyprland.workspaces
+                Rectangle {
+                    height: parent.height
+                    width: workspaceContent.implicitWidth
+                    color: theme.terminalGlass
 
-                    Item {
-                        required property var modelData
-                        readonly property int workspaceNumber: Number(modelData.name)
-                        readonly property bool inMenu: workspaceNumber >= 1 && workspaceNumber <= 5
-
-                        visible: inMenu
-                        width: inMenu ? 14 : 0
+                    Row {
+                        id: workspaceContent
+                        anchors.centerIn: parent
                         height: parent.height
+                        spacing: 8
 
                         Text {
-                            anchors.centerIn: parent
-                            text: modelData.name
-                            color: modelData.focused ? theme.primary : theme.muted
+                            width: 16
+                            height: parent.height
+                            text: "󰣇"
+                            color: theme.terminalPromptLight
                             font.family: "JetBrainsMono Nerd Font"
-                            font.bold: modelData.focused
+                            font.pixelSize: 14
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        Repeater {
+                            model: Hyprland.workspaces
+
+                            Item {
+                                required property var modelData
+                                readonly property int workspaceNumber: Number(modelData.name)
+                                readonly property bool inMenu: workspaceNumber >= 1 && workspaceNumber <= 5
+
+                                visible: inMenu
+                                width: inMenu ? 14 : 0
+                                height: parent.height
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: modelData.name
+                                    color: theme.terminalPromptLight
+                                    font.family: "JetBrainsMono Nerd Font"
+                                    font.bold: modelData.focused
+                                    font.pixelSize: 13
+                                }
+
+                                Rectangle {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.bottom: parent.bottom
+                                    width: 10
+                                    height: 2
+                                    color: theme.primary
+                                    visible: modelData.focused
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: modelData.activate()
+                                }
+                            }
+                        }
+
+                        Text {
+                            width: 14
+                            height: parent.height
+                            text: "~"
+                            color: theme.terminalPromptLight
+                            font.family: "JetBrainsMono Nerd Font"
                             font.pixelSize: 13
-                        }
-
-                        Rectangle {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.bottom
-                            width: 10
-                            height: 2
-                            color: theme.primary
-                            visible: modelData.focused
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: modelData.activate()
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
                         }
                     }
                 }
 
                 Text {
-                    width: 14
                     height: parent.height
-                    text: "~"
-                    color: theme.muted
+                    text: ""
+                    color: theme.terminalGlass
                     font.family: "JetBrainsMono Nerd Font"
-                    font.pixelSize: 13
-                    horizontalAlignment: Text.AlignHCenter
+                    font.pixelSize: parent.height
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+
+            // Powerline-style clock block on the terminal background.
+            Row {
+                anchors.right: parent.right
+                anchors.rightMargin: 22
+                anchors.verticalCenter: parent.verticalCenter
+                height: parent.height - 3
+                spacing: 0
+
+                Text {
+                    height: parent.height
+                    text: ""
+                    color: theme.terminalGlass
+                    font.family: "JetBrainsMono Nerd Font"
+                    font.pixelSize: parent.height
+                    verticalAlignment: Text.AlignVCenter
+                }
+
+                Rectangle {
+                    height: parent.height
+                    width: statusContent.implicitWidth
+                    color: theme.terminalGlass
+
+                    Row {
+                        id: statusContent
+                        anchors.centerIn: parent
+                        spacing: 11
+
+                        Text {
+                            text: Qt.formatTime(clock.date, "HH:mm:ss")
+                            color: theme.terminalPromptLight
+                            font.family: "JetBrainsMono Nerd Font"
+                            font.pixelSize: 12
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                    }
+                }
+
+                Text {
+                    height: parent.height
+                    text: ""
+                    color: theme.terminalGlass
+                    font.family: "JetBrainsMono Nerd Font"
+                    font.pixelSize: parent.height
                     verticalAlignment: Text.AlignVCenter
                 }
             }

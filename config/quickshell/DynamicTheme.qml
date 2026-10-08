@@ -14,4 +14,6 @@ QtObject {
     readonly property string outline: "#287fa3"
     readonly property string outlineVariant: "#233a40"
     readonly property string overlay: "#000000d9"
+    readonly property color terminalGlass: Qt.rgba(6 / 255, 25 / 255, 29 / 255, 0.72)
+    readonly property string terminalPromptLight: "#c0c0c0"
 }
