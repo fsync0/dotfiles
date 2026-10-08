@@ -154,9 +154,9 @@ ShellRoot {
             color: "transparent"
             focusable: false
             // Reserve an extra 12 px below the panel before Hyprland places windows.
-            exclusiveZone: 19
+            exclusiveZone: 14
             margins {
-                top: 8
+                top: 4
             }
 
             anchors {
@@ -168,12 +168,12 @@ ShellRoot {
             Row {
                 // Align the workspace list with Hyprland's 22 px outer window gap.
                 x: 22
-                height: parent.height - 3
+                height: parent.height
                 spacing: 0
 
                 Text {
                     height: parent.height
-                    text: ""
+                    text: ""
                     color: theme.terminalGlass
                     font.family: "JetBrainsMono Nerd Font"
                     font.pixelSize: parent.height
@@ -257,7 +257,7 @@ ShellRoot {
 
                 Text {
                     height: parent.height
-                    text: ""
+                    text: ""
                     color: theme.terminalGlass
                     font.family: "JetBrainsMono Nerd Font"
                     font.pixelSize: parent.height
@@ -317,12 +317,12 @@ ShellRoot {
                 anchors.right: parent.right
                 anchors.rightMargin: 22
                 anchors.verticalCenter: parent.verticalCenter
-                height: parent.height - 3
+                height: parent.height
                 spacing: 0
 
                 Text {
                     height: parent.height
-                    text: ""
+                    text: ""
                     color: theme.terminalGlass
                     font.family: "JetBrainsMono Nerd Font"
                     font.pixelSize: parent.height
@@ -343,7 +343,7 @@ ShellRoot {
                             text: Qt.formatTime(clock.date, "HH:mm:ss")
                             color: theme.terminalPromptLight
                             font.family: "JetBrainsMono Nerd Font"
-                            font.pixelSize: 12
+                            font.pixelSize: 14
                             verticalAlignment: Text.AlignVCenter
                         }
                     }
@@ -351,7 +351,7 @@ ShellRoot {
 
                 Text {
                     height: parent.height
-                    text: ""
+                    text: ""
                     color: theme.terminalGlass
                     font.family: "JetBrainsMono Nerd Font"
                     font.pixelSize: parent.height
