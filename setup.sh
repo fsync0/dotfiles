@@ -23,7 +23,7 @@ done
 if "$install_packages"; then
     sudo pacman -S --needed --noconfirm \
         hyprland hyprpaper hypridle hyprlock kitty fastfetch wofi quickshell neovim zsh tmux grim slurp \
-        networkmanager bluez bluez-utils python-textual zathura zathura-pdf-poppler
+        networkmanager bluez bluez-utils python-textual zathura zathura-pdf-poppler curl unzip fontconfig
 fi
 
 backup_root="$home_dir/.config-backups/hyprland-dotfiles-$(date +%Y%m%d-%H%M%S)"
@@ -62,6 +62,38 @@ install_file() {
     fi
 
     [[ -z "$temporary_file" ]] || rm -f -- "$temporary_file"
+}
+
+install_google_sans_code() {
+    local target="$home_dir/.local/share/fonts/GoogleSansCode"
+    local font="$target/GoogleSansCodeNerdFontMono-Regular.ttf"
+    local archive=""
+    local url="https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/GoogleSansCode.zip"
+
+    if [[ -r "$font" ]]; then
+        fc-cache -f "$target"
+        return
+    fi
+
+    command -v curl >/dev/null 2>&1 || {
+        printf 'curl is required to install Google Sans Code Nerd Font.\n' >&2
+        return 1
+    }
+    command -v unzip >/dev/null 2>&1 || {
+        printf 'unzip is required to install Google Sans Code Nerd Font.\n' >&2
+        return 1
+    }
+    command -v fc-cache >/dev/null 2>&1 || {
+        printf 'fontconfig is required to install Google Sans Code Nerd Font.\n' >&2
+        return 1
+    }
+
+    archive="$(mktemp)"
+    curl --fail --location --output "$archive" "$url"
+    mkdir -p "$target"
+    unzip -q -o "$archive" -d "$target"
+    rm -f -- "$archive"
+    fc-cache -f "$target"
 }
 
 install_powerlevel10k() {
@@ -154,6 +186,7 @@ install_file "$repo_dir/config/zsh/p10k.zsh" "$home_dir/.p10k.zsh"
 install_file "$repo_dir/bin/hypr-wallpaper-switch" "$home_dir/.local/bin/hypr-wallpaper-switch"
 install_file "$repo_dir/bin/connect" "$home_dir/.local/bin/connect"
 install_file "$repo_dir/bin/connect.tcss" "$home_dir/.local/bin/connect.tcss"
+install_google_sans_code
 install_powerlevel10k
 install_tmux_plugin_manager
 
