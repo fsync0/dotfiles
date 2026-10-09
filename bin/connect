@@ -320,6 +320,33 @@ class ConnectApp(App[None]):
         security = network["security"].casefold()
         return "802.1x" in security or "802-1x" in security or "wpa-eap" in security
 
+    async def saved_wifi_profile(self, network: dict[str, str]) -> str | None:
+        """Find profiles created by connect for this exact Wi-Fi network."""
+        ssid = network["ssid"]
+        for profile in (f"connect-enterprise-{ssid}", ssid):
+            found, saved_ssid = await self.run_command(
+                "nmcli", "-g", "802-11-wireless.ssid", "connection", "show", "id", profile
+            )
+            if found and saved_ssid == ssid:
+                return profile
+        return None
+
+    async def activate_saved_wifi(self, profile: str, network: dict[str, str]) -> bool:
+        """Reconnect using NetworkManager's saved secret instead of asking again."""
+        device = await self.wifi_device()
+        if not device:
+            self.show_notice("No Wi-Fi device found")
+            return False
+        ok, output = await self.run_command(
+            "nmcli", "--wait", "20", "connection", "up", "id", profile, "ifname", device,
+            timeout=25,
+        )
+        self.show_notice(
+            "Connected to " + network["ssid"] if ok else output or "Saved Wi-Fi connection failed"
+        )
+        await self.refresh_wifi()
+        return ok
+
     async def connect_enterprise_wifi(self, network: dict[str, str], username: str, password: str) -> None:
         """Configure and activate a PEAP/MSCHAPv2 NetworkManager profile."""
         device = await self.wifi_device()
@@ -356,6 +383,25 @@ class ConnectApp(App[None]):
         self.show_notice("Connected to " + network["ssid"] if ok else output or "Enterprise Wi-Fi connection failed")
         await self.refresh_wifi()
 
+    async def connect_selected_wifi(self, network: dict[str, str]) -> None:
+        """Prefer a saved profile; otherwise collect the appropriate credentials."""
+        profile = await self.saved_wifi_profile(network)
+        if profile:
+            await self.activate_saved_wifi(profile, network)
+            return
+        if self.is_enterprise_wifi(network):
+            self.push_screen(
+                EnterpriseDialog(network["ssid"]),
+                lambda credentials: asyncio.create_task(self.connect_enterprise_wifi(network, *credentials)) if credentials else None,
+            )
+        elif network["security"] == "Open":
+            asyncio.create_task(self.connect_wifi(network))
+        else:
+            self.push_screen(
+                PasswordDialog(network["ssid"]),
+                lambda password: asyncio.create_task(self.connect_wifi(network, password)) if password else None,
+            )
+
     def request_wifi_connection(self) -> None:
         network = self.selected_wifi()
         if not network:
@@ -364,19 +410,7 @@ class ConnectApp(App[None]):
         if network["active"] == "yes":
             self.show_notice(f"Already connected to {network['ssid']}", title="WIFI", timeout=3)
             return
-        if self.is_enterprise_wifi(network):
-            self.push_screen(
-                EnterpriseDialog(network["ssid"]),
-                lambda credentials: asyncio.create_task(self.connect_enterprise_wifi(network, *credentials)) if credentials else None,
-            )
-            return
-        if network["security"] == "Open":
-            asyncio.create_task(self.connect_wifi(network))
-            return
-        self.push_screen(
-            PasswordDialog(network["ssid"]),
-            lambda password: asyncio.create_task(self.connect_wifi(network, password)) if password else None,
-        )
+        asyncio.create_task(self.connect_selected_wifi(network))
 
     async def wifi_device(self) -> str | None:
         ok, output = await self.run_command("nmcli", "-t", "-f", "DEVICE,TYPE", "device", "status")
