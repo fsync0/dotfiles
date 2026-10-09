@@ -17,13 +17,13 @@ function! s:ApplyKittyPalette() abort
 
   let l:colors = {}
   for l:line in readfile(l:palette_file)
-    let l:match = matchlist(l:line, '^\(background\|foreground\|selection_background\|color[0-9]\+\)\s\+\(#\x\{6}\)')
+    let l:match = matchlist(l:line, '^\(background\|foreground\|selection_background\|active_border_color\|color[0-9]\+\)\s\+\(#\x\{6}\)')
     if !empty(l:match)
       let l:colors[l:match[1]] = l:match[2]
     endif
   endfor
 
-  for l:required in ['background', 'foreground', 'selection_background', 'color0', 'color1', 'color2', 'color3', 'color4', 'color5', 'color6', 'color8']
+  for l:required in ['background', 'foreground', 'selection_background', 'active_border_color', 'color0', 'color1', 'color2', 'color3', 'color4', 'color5', 'color6', 'color8']
     if !has_key(l:colors, l:required)
       return
     endif
@@ -35,6 +35,8 @@ function! s:ApplyKittyPalette() abort
   execute 'highlight LineNr guifg=' . l:colors.color8 . ' guibg=' . l:colors.background
   execute 'highlight CursorLineNr guifg=' . l:colors.color3 . ' guibg=' . l:colors.background . ' gui=bold'
   execute 'highlight CursorLine guibg=' . l:colors.color0
+  execute 'highlight VertSplit guifg=' . l:colors.active_border_color . ' guibg=' . l:colors.background . ' gui=NONE'
+  execute 'highlight VertSplitNC guifg=' . l:colors.active_border_color . ' guibg=' . l:colors.background . ' gui=NONE'
   execute 'highlight Visual guibg=' . l:colors.selection_background
   execute 'highlight Search guifg=' . l:colors.background . ' guibg=' . l:colors.color3
   execute 'highlight IncSearch guifg=' . l:colors.background . ' guibg=' . l:colors.color1
