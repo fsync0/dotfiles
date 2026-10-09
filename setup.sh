@@ -22,7 +22,7 @@ done
 
 if "$install_packages"; then
     sudo pacman -S --needed --noconfirm \
-        hyprland hyprpaper hypridle hyprlock kitty fastfetch wofi quickshell neovim zsh tmux \
+        hyprland hyprpaper hypridle hyprlock kitty fastfetch wofi quickshell neovim zsh tmux grim slurp \
         networkmanager zathura zathura-pdf-poppler
 fi
 
