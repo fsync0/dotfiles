@@ -1,0 +1,439 @@
+#!/usr/bin/env python3
+"""Terminal connection manager for NetworkManager and BlueZ."""
+
+from __future__ import annotations
+
+import asyncio
+import argparse
+import sys
+from pathlib import Path
+
+try:
+    from textual.app import App, ComposeResult
+    from textual.binding import Binding
+    from textual.containers import Horizontal, Vertical
+    from textual.screen import ModalScreen
+    from textual.widgets import Button, DataTable, Footer, Header, Input, Label, Static
+except ModuleNotFoundError:
+    print("Connect needs python-textual. Install it with: sudo pacman -S python-textual", file=sys.stderr)
+    raise SystemExit(1)
+
+
+class PasswordDialog(ModalScreen[str | None]):
+    """Ask for a Wi-Fi password without ever printing it in the terminal."""
+
+    def __init__(self, network_name: str) -> None:
+        super().__init__()
+        self.network_name = network_name
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="password-dialog"):
+            yield Label(f"Password for {self.network_name}", id="password-title")
+            yield Input(password=True, placeholder="Wi-Fi password", id="wifi-password")
+            with Horizontal(id="password-actions"):
+                yield Button("Connect", variant="primary", id="password-connect")
+                yield Button("Cancel", id="password-cancel")
+
+    def on_mount(self) -> None:
+        self.query_one("#wifi-password", Input).focus()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "wifi-password":
+            self.dismiss(event.value)
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "password-connect":
+            self.dismiss(self.query_one("#wifi-password", Input).value)
+        elif event.button.id == "password-cancel":
+            self.dismiss(None)
+
+
+class SingleMode(Vertical):
+    """A layout container that may be maximized as one full-screen view."""
+
+    @property
+    def allow_maximize(self) -> bool:
+        return True
+
+
+class ConnectApp(App[None]):
+    """A small, keyboard-first dashboard for wireless connections."""
+
+    CSS_PATH = Path(__file__).with_suffix(".tcss")
+    TITLE = "Connect"
+    SUB_TITLE = "NetworkManager + BlueZ"
+    ENABLE_COMMAND_PALETTE = False
+    ESCAPE_TO_MINIMIZE = False
+    ALLOW_IN_MAXIMIZED_VIEW = "Footer"
+
+    BINDINGS = [
+        Binding("r", "refresh", "Refresh"),
+        Binding("w", "toggle_wifi", "Wi-Fi"),
+        Binding("b", "toggle_bluetooth", "Bluetooth"),
+        Binding("s", "scan_bluetooth", "Scan BT"),
+        Binding("c", "connect_selected", "Connect"),
+        Binding("d", "disconnect_selected", "Disconnect"),
+        Binding("q", "quit", "Quit"),
+    ]
+    NOTICE_TIMEOUT = 5.0
+
+    def __init__(self, mode: str = "all") -> None:
+        super().__init__()
+        self.mode = mode
+        self.wifi_networks: list[dict[str, str]] = []
+        self.bluetooth_devices: list[dict[str, str]] = []
+        self.notice_generation = 0
+
+    @property
+    def show_wifi(self) -> bool:
+        return self.mode in {"all", "wifi"}
+
+    @property
+    def show_bluetooth(self) -> bool:
+        return self.mode in {"all", "bluetooth"}
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        if self.mode in {"wifi", "bluetooth"}:
+            with SingleMode(id="single-mode"):
+                if self.mode == "wifi":
+                    yield DataTable(id="wifi-table", cursor_type="row")
+                else:
+                    yield DataTable(id="bluetooth-table", cursor_type="row")
+                with Vertical(id="notice-rack"):
+                    yield Static("", id="notice", classes="notice")
+        else:
+            with Horizontal(id="dashboard"):
+                with Vertical(classes="panel", id="wifi-panel"):
+                    yield Label("WIFI", classes="panel-title")
+                    yield Static("Loading…", id="wifi-status", classes="status")
+                    yield DataTable(id="wifi-table", cursor_type="row")
+                    with Horizontal(classes="actions"):
+                        yield Button("Toggle", id="wifi-toggle")
+                        yield Button("Refresh", id="wifi-refresh")
+                        yield Button("Connect", variant="primary", id="wifi-connect")
+                        yield Button("Disconnect", id="wifi-disconnect")
+                with Vertical(classes="panel", id="bluetooth-panel"):
+                    yield Label("BLUETOOTH", classes="panel-title")
+                    yield Static("Loading…", id="bluetooth-status", classes="status")
+                    yield DataTable(id="bluetooth-table", cursor_type="row")
+                    with Horizontal(classes="actions"):
+                        yield Button("Toggle", id="bluetooth-toggle")
+                        yield Button("Scan", id="bluetooth-scan")
+                        yield Button("Pair / Connect", variant="primary", id="bluetooth-connect")
+                        yield Button("Disconnect", id="bluetooth-disconnect")
+            with Vertical(id="notice-rack"):
+                yield Static("", id="notice", classes="notice")
+        yield Footer()
+
+    async def on_mount(self) -> None:
+        if self.show_wifi:
+            self.query_one("#wifi-table", DataTable).add_columns("Network", "Signal", "Security")
+        if self.show_bluetooth:
+            self.query_one("#bluetooth-table", DataTable).add_columns("Device", "State")
+        await self.refresh_all()
+        if self.mode in {"wifi", "bluetooth"}:
+            self.maximize_single_mode_table()
+
+    def maximize_single_mode_table(self) -> None:
+        """Show one radio list full-screen, with its notice drawn over the table."""
+        table_id = "#wifi-table" if self.mode == "wifi" else "#bluetooth-table"
+        table = self.query_one(table_id, DataTable)
+        table.focus()
+        self.screen.maximize(self.query_one("#single-mode", SingleMode), container=False)
+
+    async def run_command(self, *command: str, timeout: float = 15) -> tuple[bool, str]:
+        """Run a system command without involving a shell."""
+        try:
+            process = await asyncio.create_subprocess_exec(
+                *command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout)
+        except FileNotFoundError:
+            return False, f"Missing command: {command[0]}"
+        except TimeoutError:
+            return False, f"Timed out: {' '.join(command[:2])}"
+
+        output = (stdout if process.returncode == 0 else stderr).decode(errors="replace").strip()
+        return process.returncode == 0, output
+
+    async def refresh_all(self) -> None:
+        tasks = []
+        if self.show_wifi:
+            tasks.append(self.refresh_wifi())
+        if self.show_bluetooth:
+            tasks.append(self.refresh_bluetooth())
+        await asyncio.gather(*tasks)
+
+    async def refresh_wifi(self) -> None:
+        status_ok, status = await self.run_command("nmcli", "-t", "-f", "WIFI", "general")
+        enabled = status_ok and status.lower() == "enabled"
+        active = ""
+
+        listed, output = await self.run_command(
+            "nmcli", "-t", "-f", "IN-USE,SSID,SIGNAL,SECURITY", "device", "wifi", "list", "--rescan", "auto"
+        )
+        networks: list[dict[str, str]] = []
+        if listed:
+            seen: set[str] = set()
+            for line in output.splitlines():
+                parts = line.split(":")
+                if len(parts) < 4:
+                    continue
+                in_use, signal, security = parts[0], parts[-2], parts[-1]
+                ssid = ":".join(parts[1:-2]).replace("\\:", ":").replace("\\\\", "\\")
+                if not ssid:
+                    continue
+                if ssid in seen:
+                    if in_use in {"*", "yes"}:
+                        active = ssid
+                        for network in networks:
+                            if network["ssid"] == ssid:
+                                network["active"] = "yes"
+                    continue
+                seen.add(ssid)
+                networks.append(
+                    {
+                        "ssid": ssid,
+                        "signal": signal or "—",
+                        "security": security or "Open",
+                        "active": "yes" if in_use in {"*", "yes"} else "no",
+                    }
+                )
+                if in_use in {"*", "yes"}:
+                    active = ssid
+
+        self.wifi_networks = networks
+        table = self.query_one("#wifi-table", DataTable)
+        table.clear(columns=False)
+        for network in networks:
+            name = network["ssid"] + ("  ●" if network["ssid"] == active else "")
+            table.add_row(name, network["signal"], network["security"])
+
+        if self.mode == "all":
+            if not enabled:
+                self.query_one("#wifi-status", Static).update("OFF")
+            elif active:
+                self.query_one("#wifi-status", Static).update(f"CONNECTED  {active}")
+            else:
+                self.query_one("#wifi-status", Static).update("ON  •  no active connection")
+
+    async def refresh_bluetooth(self) -> None:
+        shown, info = await self.run_command("bluetoothctl", "show")
+        powered = shown and "Powered: yes" in info
+        devices_ok, output = await self.run_command("bluetoothctl", "devices")
+        devices: list[dict[str, str]] = []
+
+        if devices_ok:
+            for line in output.splitlines():
+                parts = line.split(maxsplit=2)
+                if len(parts) < 3 or parts[0] != "Device":
+                    continue
+                address, name = parts[1], parts[2]
+                details_ok, details = await self.run_command("bluetoothctl", "info", address)
+                connected = details_ok and "Connected: yes" in details
+                paired = details_ok and "Paired: yes" in details
+                state = "connected" if connected else "paired" if paired else "available"
+                devices.append({"address": address, "name": name, "state": state})
+
+        self.bluetooth_devices = devices
+        table = self.query_one("#bluetooth-table", DataTable)
+        table.clear(columns=False)
+        for device in devices:
+            name = device["name"] + ("  ●" if device["state"] == "connected" else "")
+            table.add_row(name, device["state"])
+
+        if self.mode == "all":
+            if not powered:
+                self.query_one("#bluetooth-status", Static).update("OFF")
+            elif any(device["state"] == "connected" for device in devices):
+                self.query_one("#bluetooth-status", Static).update("ON  •  device connected")
+            else:
+                self.query_one("#bluetooth-status", Static).update("ON  •  no active device")
+
+    def selected_wifi(self) -> dict[str, str] | None:
+        row = self.query_one("#wifi-table", DataTable).cursor_row
+        return self.wifi_networks[row] if 0 <= row < len(self.wifi_networks) else None
+
+    def selected_bluetooth(self) -> dict[str, str] | None:
+        row = self.query_one("#bluetooth-table", DataTable).cursor_row
+        return self.bluetooth_devices[row] if 0 <= row < len(self.bluetooth_devices) else None
+
+    async def connect_wifi(self, network: dict[str, str], password: str | None = None) -> None:
+        command = ["nmcli", "--wait", "15", "device", "wifi", "connect", network["ssid"]]
+        if password:
+            command.extend(["password", password])
+        ok, output = await self.run_command(*command, timeout=20)
+        self.show_notice("Connected to " + network["ssid"] if ok else output or "Wi-Fi connection failed")
+        await self.refresh_wifi()
+
+    def request_wifi_connection(self) -> None:
+        network = self.selected_wifi()
+        if not network:
+            self.show_notice("Select a Wi-Fi network first")
+            return
+        if network["active"] == "yes":
+            self.show_notice(f"Already connected to {network['ssid']}", title="WIFI", timeout=3)
+            return
+        if network["security"] == "Open":
+            asyncio.create_task(self.connect_wifi(network))
+            return
+        self.push_screen(
+            PasswordDialog(network["ssid"]),
+            lambda password: asyncio.create_task(self.connect_wifi(network, password)) if password else None,
+        )
+
+    async def wifi_device(self) -> str | None:
+        ok, output = await self.run_command("nmcli", "-t", "-f", "DEVICE,TYPE", "device", "status")
+        if not ok:
+            return None
+        for line in output.splitlines():
+            device, separator, device_type = line.rpartition(":")
+            if separator and device_type == "wifi":
+                return device
+        return None
+
+    async def connect_bluetooth(self) -> None:
+        device = self.selected_bluetooth()
+        if not device:
+            self.show_notice("Select a Bluetooth device first")
+            return
+        if device["state"] == "available":
+            paired, message = await self.run_command("bluetoothctl", "pair", device["address"], timeout=30)
+            if not paired:
+                self.show_notice(message or "Pairing failed")
+                return
+            await self.run_command("bluetoothctl", "trust", device["address"])
+        ok, output = await self.run_command("bluetoothctl", "connect", device["address"], timeout=30)
+        self.show_notice("Connected to " + device["name"] if ok else output or "Bluetooth connection failed")
+        await self.refresh_bluetooth()
+
+    async def disconnect_wifi(self) -> None:
+        device = await self.wifi_device()
+        if not device:
+            self.show_notice("No Wi-Fi device found")
+            return
+        ok, output = await self.run_command("nmcli", "device", "disconnect", device)
+        self.show_notice("Wi-Fi disconnected" if ok else output or "Disconnect failed")
+        await self.refresh_wifi()
+
+    async def disconnect_bluetooth(self) -> None:
+        bluetooth = self.selected_bluetooth()
+        if not bluetooth:
+            self.show_notice("Select a Bluetooth device first")
+            return
+        ok, output = await self.run_command("bluetoothctl", "disconnect", bluetooth["address"])
+        self.show_notice("Bluetooth disconnected" if ok else output or "Disconnect failed")
+        await self.refresh_bluetooth()
+
+    async def toggle_wifi(self) -> None:
+        _, status = await self.run_command("nmcli", "-t", "-f", "WIFI", "general")
+        turn_on = status.lower() != "enabled"
+        ok, output = await self.run_command("nmcli", "radio", "wifi", "on" if turn_on else "off")
+        if ok:
+            self.show_radio_state("WIFI ENABLED" if turn_on else "WIFI DISABLED")
+        else:
+            self.show_notice(output or "Wi-Fi toggle failed")
+        await self.refresh_wifi()
+
+    async def toggle_bluetooth(self) -> None:
+        _, details = await self.run_command("bluetoothctl", "show")
+        turn_on = "Powered: yes" not in details
+        ok, output = await self.run_command("bluetoothctl", "power", "on" if turn_on else "off")
+        if ok:
+            self.show_radio_state("BLUETOOTH ENABLED" if turn_on else "BLUETOOTH DISABLED")
+        else:
+            self.show_notice(output or "Bluetooth toggle failed")
+        await self.refresh_bluetooth()
+
+    def show_radio_state(self, message: str) -> None:
+        self.show_notice(message, title="RADIO STATE", timeout=6)
+
+    def show_notice(self, message: str, *, title: str = "", timeout: float | None = None) -> None:
+        """Show one replacement-only notice in the bottom-right corner."""
+        self.notice_generation += 1
+        generation = self.notice_generation
+        notice = self.query_one("#notice", Static)
+        notice.update(f"{title}\n{message}" if title else message)
+        notice.display = True
+        self.call_after_refresh(self.position_notice)
+        self.set_timer(timeout or self.NOTICE_TIMEOUT, lambda: self.hide_notice(generation))
+
+    def hide_notice(self, generation: int) -> None:
+        if generation == self.notice_generation:
+            self.query_one("#notice", Static).display = False
+
+    def position_notice(self) -> None:
+        """Anchor the overlay above the footer without taking table space."""
+        rack = self.query_one("#notice-rack", Vertical)
+        footer_height = self.query_one(Footer).size.height
+        rack.styles.offset = (0, max(0, self.screen.size.height - rack.size.height - footer_height))
+
+    async def scan_bluetooth(self) -> None:
+        self.show_notice("Scanning for Bluetooth devices…", title="BLUETOOTH")
+        await self.run_command("bluetoothctl", "--timeout", "8", "scan", "on", timeout=10)
+        await self.run_command("bluetoothctl", "scan", "off")
+        await self.refresh_bluetooth()
+
+    async def action_refresh(self) -> None:
+        await self.refresh_all()
+
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        """Hide keys that cannot apply to a single-mode view."""
+        if action == "toggle_wifi" and not self.show_wifi:
+            return False
+        if action in {"toggle_bluetooth", "scan_bluetooth"} and not self.show_bluetooth:
+            return False
+        return True
+
+    async def action_toggle_wifi(self) -> None:
+        if self.show_wifi:
+            await self.toggle_wifi()
+
+    async def action_toggle_bluetooth(self) -> None:
+        if self.show_bluetooth:
+            await self.toggle_bluetooth()
+
+    async def action_scan_bluetooth(self) -> None:
+        if self.show_bluetooth:
+            await self.scan_bluetooth()
+
+    def action_connect_selected(self) -> None:
+        if self.mode == "bluetooth" or getattr(self.focused, "id", None) == "bluetooth-table":
+            asyncio.create_task(self.connect_bluetooth())
+        elif self.show_wifi:
+            self.request_wifi_connection()
+
+    async def action_disconnect_selected(self) -> None:
+        if self.mode == "bluetooth" or getattr(self.focused, "id", None) == "bluetooth-table":
+            await self.disconnect_bluetooth()
+        elif self.show_wifi:
+            await self.disconnect_wifi()
+
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        actions = {
+            "wifi-toggle": self.toggle_wifi,
+            "wifi-refresh": self.refresh_wifi,
+            "wifi-connect": self.request_wifi_connection,
+            "wifi-disconnect": self.disconnect_wifi,
+            "bluetooth-toggle": self.toggle_bluetooth,
+            "bluetooth-scan": self.scan_bluetooth,
+            "bluetooth-connect": self.connect_bluetooth,
+            "bluetooth-disconnect": self.disconnect_bluetooth,
+        }
+        action = actions.get(event.button.id or "")
+        if action:
+            result = action()
+            if hasattr(result, "__await__"):
+                await result
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Manage Wi-Fi and Bluetooth from the terminal.")
+    view = parser.add_mutually_exclusive_group()
+    view.add_argument("-w", "--wifi", action="store_true", help="open only the maximized Wi-Fi view")
+    view.add_argument("-b", "--bluetooth", action="store_true", help="open only the maximized Bluetooth view")
+    args = parser.parse_args()
+    ConnectApp("wifi" if args.wifi else "bluetooth" if args.bluetooth else "all").run()

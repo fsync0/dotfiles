@@ -1,0 +1,138 @@
+/* Terminal palette: background #06191d, text #aebdc0, border #585858. */
+
+Screen {
+    background: #06191d;
+    color: #aebdc0;
+}
+
+Header, Footer {
+    background: #06191d;
+    color: #aebdc0;
+}
+
+#dashboard {
+    height: 1fr;
+    padding: 1 2;
+    background: #06191d;
+}
+
+.panel {
+    width: 1fr;
+    height: 1fr;
+    margin: 0 1;
+    padding: 0 1 1 1;
+    border: solid #585858;
+    background: #06191d;
+}
+
+.panel-title {
+    color: #aebdc0;
+    text-style: bold;
+    padding: 1 0 0 0;
+}
+
+.status {
+    color: #8bbb92;
+    padding: 0 0 1 0;
+}
+
+DataTable {
+    height: 1fr;
+    background: #06191d;
+    color: #aebdc0;
+    border: solid #585858;
+}
+
+#single-mode {
+    height: 1fr;
+}
+
+#single-mode > DataTable {
+    height: 100%;
+}
+
+DataTable > .datatable--header {
+    background: #1d3035;
+    color: #aebdc0;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: #1d3035;
+    color: #e9c46a;
+}
+
+.actions {
+    height: auto;
+    padding: 1 0 0 0;
+}
+
+Button {
+    min-width: 12;
+    margin: 0 1 0 0;
+    color: #aebdc0;
+    background: #1d3035;
+    border: solid #585858;
+}
+
+Button:hover, Button:focus {
+    color: #e9c46a;
+    border: solid #e9c46a;
+}
+
+Button.-primary {
+    color: #06191d;
+    background: #aebdc0;
+}
+
+#notice-rack {
+    position: absolute;
+    offset: 0 0;
+    align: right bottom;
+    width: 1fr;
+    height: auto;
+    margin: 0;
+    background: transparent;
+}
+
+.notice {
+    display: none;
+    width: 36;
+    max-width: 36;
+    color: #aebdc0;
+    background: transparent;
+    border: solid #585858;
+    padding: 0 1;
+    margin: 1 0 0 0;
+    text-align: left;
+}
+
+ModalScreen {
+    align: center middle;
+    background: #06191d 70%;
+}
+
+#password-dialog {
+    width: 58;
+    height: auto;
+    padding: 1 2;
+    border: solid #585858;
+    background: #06191d;
+}
+
+#password-title {
+    color: #aebdc0;
+    text-style: bold;
+    padding: 0 0 1 0;
+}
+
+#wifi-password {
+    background: #1d3035;
+    color: #aebdc0;
+    border: solid #585858;
+}
+
+#password-actions {
+    height: auto;
+    padding: 1 0 0 0;
+}

@@ -23,7 +23,7 @@ done
 if "$install_packages"; then
     sudo pacman -S --needed --noconfirm \
         hyprland hyprpaper hypridle hyprlock kitty fastfetch wofi quickshell neovim zsh tmux grim slurp \
-        networkmanager zathura zathura-pdf-poppler
+        networkmanager bluez bluez-utils python-textual zathura zathura-pdf-poppler
 fi
 
 backup_root="$home_dir/.config-backups/hyprland-dotfiles-$(date +%Y%m%d-%H%M%S)"
@@ -46,7 +46,7 @@ install_file() {
     local temporary_file=""
     local mode="0644"
 
-    [[ "$source" == *"hypr-wallpaper-switch" ]] && mode="0755"
+    [[ "$source" == *"hypr-wallpaper-switch" || "$source" == *"/bin/connect" ]] && mode="0755"
 
     if [[ "$source" == *"hyprpaper.conf" ]]; then
         temporary_file="$(mktemp)"
@@ -152,6 +152,8 @@ install_file "$repo_dir/config/tmux/macos.conf" "$home_dir/.config/tmux/macos.co
 install_file "$repo_dir/config/zsh/zshrc" "$home_dir/.zshrc"
 install_file "$repo_dir/config/zsh/p10k.zsh" "$home_dir/.p10k.zsh"
 install_file "$repo_dir/bin/hypr-wallpaper-switch" "$home_dir/.local/bin/hypr-wallpaper-switch"
+install_file "$repo_dir/bin/connect" "$home_dir/.local/bin/connect"
+install_file "$repo_dir/bin/connect.tcss" "$home_dir/.local/bin/connect.tcss"
 install_powerlevel10k
 install_tmux_plugin_manager
 
