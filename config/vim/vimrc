@@ -13,3 +13,94 @@ let g:startify_lists = [
 nnoremap <silent> <leader>s :Startify<CR>
 nnoremap <silent> <leader><Bar> :vsplit<CR>
 nnoremap <silent> <leader>- :split<CR>
+
+" LSP and completion
+set completeopt=menuone,noinsert,noselect
+set pumopt=height:5,opacity:100,border:single
+let g:lsp_diagnostics_signs_enabled = 1
+let g:lsp_diagnostics_virtual_text_enabled = 0
+let g:lsp_diagnostics_echo_cursor = 0
+let g:lsp_diagnostics_float_cursor = 0
+inoremap <expr> <Tab> pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<C-h>"
+inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<CR>"
+
+function! s:find_lsp_executable(name) abort
+  let l:system_path = exepath(a:name)
+  if !empty(l:system_path)
+    return l:system_path
+  endif
+
+  let l:mason_path = expand('~/.local/share/nvim/mason/bin/' . a:name)
+  return executable(l:mason_path) ? l:mason_path : ''
+endfunction
+
+let s:lsp_servers = {
+      \ 'pyright': s:find_lsp_executable('pyright-langserver'),
+      \ 'gopls': s:find_lsp_executable('gopls'),
+      \ 'rust_analyzer': s:find_lsp_executable('rust-analyzer'),
+      \ }
+
+function! s:register_lsp_servers() abort
+  if !empty(s:lsp_servers.pyright)
+    call lsp#register_server({
+          \ 'name': 'pyright',
+          \ 'cmd': {server_info -> [s:lsp_servers.pyright, '--stdio']},
+          \ 'allowlist': ['python'],
+          \ })
+  endif
+
+  if !empty(s:lsp_servers.gopls)
+    call lsp#register_server({
+          \ 'name': 'gopls',
+          \ 'cmd': {server_info -> [s:lsp_servers.gopls]},
+          \ 'allowlist': ['go', 'gomod', 'gowork'],
+          \ })
+  endif
+
+  if !empty(s:lsp_servers.rust_analyzer)
+    call lsp#register_server({
+          \ 'name': 'rust-analyzer',
+          \ 'cmd': {server_info -> [s:lsp_servers.rust_analyzer]},
+          \ 'allowlist': ['rust'],
+          \ })
+  endif
+endfunction
+
+function! s:on_lsp_buffer_enabled() abort
+  setlocal omnifunc=lsp#complete
+  setlocal signcolumn=yes
+  nmap <buffer> gd <plug>(lsp-definition)
+  nmap <buffer> gr <plug>(lsp-references)
+  nmap <buffer> K <plug>(lsp-hover)
+  nmap <buffer> <leader>rn <plug>(lsp-rename)
+  nmap <buffer> <leader>ca <plug>(lsp-code-action)
+  nmap <buffer> [d <plug>(lsp-previous-diagnostic)
+  nmap <buffer> ]d <plug>(lsp-next-diagnostic)
+  nnoremap <silent> <buffer> <leader>e :<C-u>call <SID>show_lsp_diagnostic()<CR>
+endfunction
+
+function! s:show_lsp_diagnostic() abort
+  let l:uri = lsp#utils#get_buffer_uri(bufnr('%'))
+  let l:responses = lsp#internal#diagnostics#state#_get_all_diagnostics_grouped_by_server_for_uri(l:uri)
+  let l:current_line = line('.')
+  let l:messages = []
+
+  for l:response in values(l:responses)
+    for l:diagnostic in get(get(l:response, 'params', {}), 'diagnostics', [])
+      let [l:start_line, l:start_col] = lsp#utils#position#lsp_to_vim('%', l:diagnostic['range']['start'])
+      let [l:end_line, l:end_col] = lsp#utils#position#lsp_to_vim('%', l:diagnostic['range']['end'])
+      if l:current_line >= l:start_line && l:current_line <= l:end_line
+        call add(l:messages, get(l:diagnostic, 'message', 'No diagnostic message available.'))
+      endif
+    endfor
+  endfor
+
+  echo empty(l:messages) ? 'No diagnostic on this line.' : join(l:messages, ' | ')
+endfunction
+
+augroup VimLspSetup
+  autocmd!
+  autocmd User lsp_setup call s:register_lsp_servers()
+  autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
+augroup END

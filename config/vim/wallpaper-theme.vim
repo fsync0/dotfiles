@@ -11,6 +11,7 @@ filetype plugin indent on
 
 function! s:ApplyKittyPalette() abort
   let l:palette_file = expand('~/.config/kitty/dynamic.conf')
+  let l:popup_border = '#585858'
   if !filereadable(l:palette_file)
     return
   endif
@@ -35,13 +36,26 @@ function! s:ApplyKittyPalette() abort
   execute 'highlight LineNr guifg=' . l:colors.color8 . ' guibg=' . l:colors.background
   execute 'highlight CursorLineNr guifg=' . l:colors.color3 . ' guibg=' . l:colors.background . ' gui=bold'
   execute 'highlight CursorLine guibg=' . l:colors.color0
+  execute 'highlight SignColumn guibg=NONE'
+  execute 'highlight CursorLineSign guibg=NONE'
   execute 'highlight VertSplit guifg=' . l:colors.active_border_color . ' guibg=' . l:colors.background . ' gui=NONE'
   execute 'highlight VertSplitNC guifg=' . l:colors.active_border_color . ' guibg=' . l:colors.background . ' gui=NONE'
   execute 'highlight Visual guibg=' . l:colors.selection_background
   execute 'highlight Search guifg=' . l:colors.background . ' guibg=' . l:colors.color3
   execute 'highlight IncSearch guifg=' . l:colors.background . ' guibg=' . l:colors.color1
-  execute 'highlight Pmenu guifg=' . l:colors.foreground . ' guibg=' . l:colors.color0
-  execute 'highlight PmenuSel guifg=' . l:colors.background . ' guibg=' . l:colors.color4
+  execute 'highlight Pmenu guifg=' . l:colors.foreground . ' guibg=' . l:colors.background . ' gui=NONE'
+  execute 'highlight PmenuSel guifg=' . l:colors.foreground . ' guibg=#1d3035 gui=NONE'
+  execute 'highlight PmenuKind guifg=' . l:colors.color8 . ' guibg=' . l:colors.background
+  execute 'highlight PmenuKindSel guifg=' . l:colors.color8 . ' guibg=#1d3035'
+  execute 'highlight PmenuExtra guifg=' . l:colors.color8 . ' guibg=' . l:colors.background
+  execute 'highlight PmenuExtraSel guifg=' . l:colors.color8 . ' guibg=#1d3035'
+  execute 'highlight PmenuSbar guibg=' . l:colors.background
+  execute 'highlight PmenuThumb guibg=' . l:colors.color8
+  execute 'highlight PmenuBorder guifg=' . l:popup_border . ' guibg=' . l:colors.background
+  execute 'highlight LspErrorText guifg=' . l:colors.color1 . ' guibg=NONE gui=NONE'
+  execute 'highlight LspWarningText guifg=' . l:colors.color3 . ' guibg=NONE gui=NONE'
+  execute 'highlight LspInformationText guifg=' . l:colors.color4 . ' guibg=NONE gui=NONE'
+  execute 'highlight LspHintText guifg=' . l:colors.color6 . ' guibg=NONE gui=NONE'
   execute 'highlight Comment guifg=' . l:colors.color8 . ' gui=italic'
   execute 'highlight Constant guifg=' . l:colors.color3
   execute 'highlight String guifg=' . l:colors.color2
