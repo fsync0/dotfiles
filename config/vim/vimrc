@@ -1,1 +1,12 @@
 source ~/.config/vim/wallpaper-theme.vim
+set number
+
+let mapleader = ' '
+
+" vim-startify is installed as a native Vim package by setup.sh.
+" Its default screen appears when Vim opens without a file.
+let g:startify_change_to_vcs_root = 0
+let g:startify_lists = [
+      \ { 'type': 'dir', 'header': ['   Current directory'] },
+      \ ]
+nnoremap <silent> <leader>s :Startify<CR>

@@ -134,6 +134,25 @@ install_tmux_plugin_manager() {
     git clone --depth=1 https://github.com/tmux-plugins/tpm.git "$target"
 }
 
+install_vim_startify() {
+    local target="$home_dir/.vim/pack/plugins/start/vim-startify"
+
+    [[ -r "$target/plugin/startify.vim" ]] && return
+
+    if [[ -e "$target" ]]; then
+        printf 'vim-startify target exists but is incomplete: %s\n' "$target" >&2
+        return 1
+    fi
+
+    command -v git >/dev/null 2>&1 || {
+        printf 'Git is required to install vim-startify.\n' >&2
+        return 1
+    }
+
+    mkdir -p "$(dirname -- "$target")"
+    git clone --depth=1 https://github.com/mhinz/vim-startify.git "$target"
+}
+
 install_file "$repo_dir/config/hypr/hyprland.lua" "$home_dir/.config/hypr/hyprland.lua"
 install_file "$repo_dir/config/hypr/colors.lua" "$home_dir/.config/hypr/colors.lua"
 install_file "$repo_dir/config/hypr/hypridle.conf" "$home_dir/.config/hypr/hypridle.conf"
@@ -189,6 +208,7 @@ install_file "$repo_dir/bin/connect.tcss" "$home_dir/.local/bin/connect.tcss"
 install_google_sans_code
 install_powerlevel10k
 install_tmux_plugin_manager
+install_vim_startify
 
 for wallpaper in "$repo_dir"/assets/wallpapers/*; do
     [[ -f "$wallpaper" ]] || continue
