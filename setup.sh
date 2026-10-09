@@ -24,7 +24,7 @@ if "$install_packages"; then
     sudo pacman -S --needed --noconfirm \
         hyprland hyprpaper hypridle hyprlock kitty fastfetch wofi quickshell neovim vim zsh tmux grim slurp \
         networkmanager bluez bluez-utils python-textual zathura zathura-pdf-poppler curl unzip fontconfig git fzf ripgrep \
-        pyright gopls rust-analyzer
+        pyright gopls rust-analyzer clang
 fi
 
 backup_root="$home_dir/.config-backups/hyprland-dotfiles-$(date +%Y%m%d-%H%M%S)"

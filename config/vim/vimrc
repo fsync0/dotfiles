@@ -101,6 +101,7 @@ let s:lsp_servers = {
       \ 'pyright': s:find_lsp_executable('pyright-langserver'),
       \ 'gopls': s:find_lsp_executable('gopls'),
       \ 'rust_analyzer': s:find_lsp_executable('rust-analyzer'),
+      \ 'clangd': s:find_lsp_executable('clangd'),
       \ }
 
 function! s:register_lsp_servers() abort
@@ -127,11 +128,25 @@ function! s:register_lsp_servers() abort
           \ 'allowlist': ['rust'],
           \ })
   endif
+
+  if !empty(s:lsp_servers.clangd)
+    call lsp#register_server({
+          \ 'name': 'clangd',
+          \ 'cmd': {server_info -> [s:lsp_servers.clangd]},
+          \ 'allowlist': ['c', 'cpp', 'objc', 'objcpp'],
+          \ })
+  endif
 endfunction
 
 function! s:on_lsp_buffer_enabled() abort
   setlocal omnifunc=lsp#complete
   setlocal signcolumn=yes
+  " rust-analyzer can still be indexing while the first completion request is
+  " sent.  Refresh on each typed character so a late response is retried.
+  if &l:filetype ==# 'rust'
+    let b:asyncomplete_refresh_always = 1
+    let b:asyncomplete_min_chars = 1
+  endif
   nmap <buffer> gd <plug>(lsp-definition)
   nmap <buffer> gr <plug>(lsp-references)
   nmap <buffer> K <plug>(lsp-hover)
