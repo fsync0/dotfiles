@@ -24,6 +24,7 @@ return {
 			---@type lspconfig.options
 			servers = {
 				pyright = {},
+				gopls = {},
 				cssls = {},
 				tailwindcss = {
 					root_dir = function(...)
