@@ -23,7 +23,7 @@ done
 if "$install_packages"; then
     sudo pacman -S --needed --noconfirm \
         hyprland hyprpaper hypridle hyprlock kitty fastfetch wofi quickshell neovim vim zsh tmux grim slurp \
-        networkmanager bluez bluez-utils python-textual zathura zathura-pdf-poppler curl unzip fontconfig git \
+        networkmanager bluez bluez-utils python-textual zathura zathura-pdf-poppler curl unzip fontconfig git fzf ripgrep \
         pyright gopls rust-analyzer
 fi
 
@@ -185,6 +185,39 @@ install_vim_lsp_plugins() {
     done
 }
 
+install_vim_productivity_plugins() {
+    local plugin_root="$home_dir/.vim/pack/plugins/start"
+    local names=("vim-tmux-navigator" "vim-fugitive" "fzf.vim" "undotree" "vim-which-key")
+    local sources=(
+        "https://github.com/christoomey/vim-tmux-navigator.git"
+        "https://github.com/tpope/vim-fugitive.git"
+        "https://github.com/junegunn/fzf.vim.git"
+        "https://github.com/mbbill/undotree.git"
+        "https://github.com/liuchengxu/vim-which-key.git"
+    )
+    local plugin_files=("plugin/tmux_navigator.vim" "plugin/fugitive.vim" "plugin/fzf.vim" "plugin/undotree.vim" "plugin/which_key.vim")
+    local index=""
+    local target=""
+
+    command -v git >/dev/null 2>&1 || {
+        printf 'Git is required to install Vim productivity plugins.\n' >&2
+        return 1
+    }
+
+    mkdir -p "$plugin_root"
+    for index in "${!names[@]}"; do
+        target="$plugin_root/${names[$index]}"
+        [[ -r "$target/${plugin_files[$index]}" ]] && continue
+
+        if [[ -e "$target" ]]; then
+            printf 'Vim plugin target exists but is incomplete: %s\n' "$target" >&2
+            return 1
+        fi
+
+        git clone --depth=1 "${sources[$index]}" "$target"
+    done
+}
+
 install_file "$repo_dir/config/hypr/hyprland.lua" "$home_dir/.config/hypr/hyprland.lua"
 install_file "$repo_dir/config/hypr/colors.lua" "$home_dir/.config/hypr/colors.lua"
 install_file "$repo_dir/config/hypr/hypridle.conf" "$home_dir/.config/hypr/hypridle.conf"
@@ -242,6 +275,7 @@ install_powerlevel10k
 install_tmux_plugin_manager
 install_vim_startify
 install_vim_lsp_plugins
+install_vim_productivity_plugins
 
 for wallpaper in "$repo_dir"/assets/wallpapers/*; do
     [[ -f "$wallpaper" ]] || continue

@@ -52,6 +52,14 @@ function! s:ApplyKittyPalette() abort
   execute 'highlight PmenuSbar guibg=' . l:colors.background
   execute 'highlight PmenuThumb guibg=' . l:colors.color8
   execute 'highlight PmenuBorder guifg=' . l:popup_border . ' guibg=' . l:colors.background
+  execute 'highlight WhichKeyFloating guifg=' . l:colors.foreground . ' guibg=' . l:colors.background . ' gui=NONE'
+  execute 'highlight WhichKeyBorder guifg=' . l:popup_border . ' guibg=' . l:colors.background . ' gui=NONE'
+  execute 'highlight WhichKey guifg=' . l:colors.color4 . ' guibg=' . l:colors.background . ' gui=bold'
+  execute 'highlight WhichKeySeperator guifg=' . l:colors.color8 . ' guibg=' . l:colors.background . ' gui=NONE'
+  execute 'highlight WhichKeyGroup guifg=' . l:colors.color5 . ' guibg=' . l:colors.background . ' gui=bold'
+  execute 'highlight WhichKeyDesc guifg=' . l:colors.foreground . ' guibg=' . l:colors.background . ' gui=NONE'
+  execute 'highlight WhichKeyTrigger guifg=' . l:colors.color3 . ' guibg=' . l:colors.background . ' gui=NONE'
+  execute 'highlight WhichKeyName guifg=' . l:colors.foreground . ' guibg=' . l:colors.background . ' gui=bold'
   execute 'highlight LspErrorText guifg=' . l:colors.color1 . ' guibg=NONE gui=NONE'
   execute 'highlight LspWarningText guifg=' . l:colors.color3 . ' guibg=NONE gui=NONE'
   execute 'highlight LspInformationText guifg=' . l:colors.color4 . ' guibg=NONE gui=NONE'
@@ -79,6 +87,8 @@ endfunction
 augroup WallpaperTheme
   autocmd!
   autocmd VimEnter,FocusGained * call <SID>ApplyKittyPalette()
+  " vim-which-key's filetype plugin sets its own bright defaults.
+  autocmd FileType which_key call <SID>ApplyKittyPalette()
 augroup END
 
 call <SID>ApplyKittyPalette()

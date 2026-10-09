@@ -4,6 +4,15 @@ set fillchars+=vert:│
 
 let mapleader = ' '
 
+if has('persistent_undo')
+  let s:undo_dir = expand('~/.local/state/vim/undo')
+  if !isdirectory(s:undo_dir)
+    call mkdir(s:undo_dir, 'p', 0700)
+  endif
+  let &undodir = s:undo_dir . '//'
+  set undofile
+endif
+
 " vim-startify is installed as a native Vim package by setup.sh.
 " Its default screen appears when Vim opens without a file.
 let g:startify_change_to_vcs_root = 0
@@ -13,6 +22,59 @@ let g:startify_lists = [
 nnoremap <silent> <leader>s :Startify<CR>
 nnoremap <silent> <leader><Bar> :vsplit<CR>
 nnoremap <silent> <leader>- :split<CR>
+nnoremap <silent> <leader>ff :Files<CR>
+nnoremap <silent> <leader>fg :Rg<CR>
+nnoremap <silent> <leader>fb :Buffers<CR>
+nnoremap <silent> <leader>g :Git<CR>
+nnoremap <silent> <leader>u :UndotreeToggle<CR>
+
+" vim-which-key: show the available leader mappings after Space.
+set timeout
+set timeoutlen=500
+let g:which_key_hspace = 4
+let g:which_key_map = {
+      \ 'f': {
+      \   'name': '+find',
+      \   'f': 'files',
+      \   'g': 'text search',
+      \   'b': 'buffers',
+      \ },
+      \ 'g': 'git status',
+      \ 'u': 'undo tree',
+      \ 's': 'start dashboard',
+      \ '|': 'vertical split',
+      \ '-': 'horizontal split',
+      \ 'r': {
+      \   'name': '+language',
+      \   'n': 'rename symbol',
+      \ },
+      \ 'c': {
+      \   'name': '+code',
+      \   'a': 'code action',
+      \ },
+      \ 'e': 'line diagnostic',
+      \ }
+let g:which_key_floating_opts_explicit = {
+      \ 'border': [1, 1, 1, 1],
+      \ 'borderchars': ['─', '│', '─', '│', '╭', '╮', '╯', '╰'],
+      \ 'borderhighlight': ['WhichKeyBorder'],
+      \ 'padding': [0, 1, 0, 1],
+      \ }
+nnoremap <silent> <leader> :<C-u>WhichKey '<Space>'<CR>
+vnoremap <silent> <leader> :<C-u>WhichKeyVisual '<Space>'<CR>
+
+" Native Vim packages load just after vimrc, so register the guide on VimEnter.
+function! s:register_which_key() abort
+  if exists(':WhichKey') == 2
+    call which_key#register('<Space>', 'g:which_key_map')
+  endif
+endfunction
+
+augroup VimWhichKeySetup
+  autocmd!
+  autocmd VimEnter * call <SID>register_which_key()
+augroup END
+call s:register_which_key()
 
 " LSP and completion
 set completeopt=menuone,noinsert,noselect
