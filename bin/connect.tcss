@@ -112,7 +112,7 @@ ModalScreen {
     background: #06191d 70%;
 }
 
-#password-dialog {
+#password-dialog, #enterprise-dialog {
     width: 58;
     height: auto;
     padding: 1 2;
@@ -120,7 +120,7 @@ ModalScreen {
     background: #06191d;
 }
 
-#password-title {
+#password-title, #enterprise-title {
     color: #aebdc0;
     text-style: bold;
     padding: 0 0 1 0;
@@ -132,7 +132,23 @@ ModalScreen {
     border: solid #585858;
 }
 
-#password-actions {
+#enterprise-username, #enterprise-password {
+    background: #1d3035;
+    color: #aebdc0;
+    border: solid #585858;
+}
+
+#enterprise-method {
+    color: #8bbb92;
+    padding: 0 0 1 0;
+}
+
+#enterprise-error {
+    color: #e9c46a;
+    height: 1;
+}
+
+#password-actions, #enterprise-actions {
     height: auto;
     padding: 1 0 0 0;
 }

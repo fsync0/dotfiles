@@ -48,6 +48,52 @@ class PasswordDialog(ModalScreen[str | None]):
             self.dismiss(None)
 
 
+class EnterpriseDialog(ModalScreen[tuple[str, str] | None]):
+    """Collect credentials for WPA-Enterprise / 802.1X Wi-Fi."""
+
+    def __init__(self, network_name: str) -> None:
+        super().__init__()
+        self.network_name = network_name
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="enterprise-dialog"):
+            yield Label(f"Enterprise login for {self.network_name}", id="enterprise-title")
+            yield Label("PEAP / MSCHAPv2", id="enterprise-method")
+            yield Input(placeholder="University username", id="enterprise-username")
+            yield Input(password=True, placeholder="University password", id="enterprise-password")
+            yield Static("", id="enterprise-error")
+            with Horizontal(id="enterprise-actions"):
+                yield Button("Connect", variant="primary", id="enterprise-connect")
+                yield Button("Cancel", id="enterprise-cancel")
+
+    def on_mount(self) -> None:
+        self.query_one("#enterprise-username", Input).focus()
+
+    def credentials(self) -> tuple[str, str] | None:
+        username = self.query_one("#enterprise-username", Input).value.strip()
+        password = self.query_one("#enterprise-password", Input).value
+        if username and password:
+            return username, password
+        self.query_one("#enterprise-error", Static).update("Username and password are required")
+        return None
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "enterprise-username":
+            self.query_one("#enterprise-password", Input).focus()
+        elif event.input.id == "enterprise-password":
+            credentials = self.credentials()
+            if credentials:
+                self.dismiss(credentials)
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "enterprise-connect":
+            credentials = self.credentials()
+            if credentials:
+                self.dismiss(credentials)
+        elif event.button.id == "enterprise-cancel":
+            self.dismiss(None)
+
+
 class SingleMode(Vertical):
     """A layout container that may be maximized as one full-screen view."""
 
@@ -269,6 +315,47 @@ class ConnectApp(App[None]):
         self.show_notice("Connected to " + network["ssid"] if ok else output or "Wi-Fi connection failed")
         await self.refresh_wifi()
 
+    @staticmethod
+    def is_enterprise_wifi(network: dict[str, str]) -> bool:
+        security = network["security"].casefold()
+        return "802.1x" in security or "802-1x" in security or "wpa-eap" in security
+
+    async def connect_enterprise_wifi(self, network: dict[str, str], username: str, password: str) -> None:
+        """Configure and activate a PEAP/MSCHAPv2 NetworkManager profile."""
+        device = await self.wifi_device()
+        if not device:
+            self.show_notice("No Wi-Fi device found")
+            return
+
+        profile = f"connect-enterprise-{network['ssid']}"
+        exists, _ = await self.run_command("nmcli", "connection", "show", "id", profile)
+        settings = (
+            "wifi-sec.key-mgmt", "wpa-eap",
+            "802-1x.eap", "peap",
+            "802-1x.identity", username,
+            "802-1x.password", password,
+            "802-1x.phase2-auth", "mschapv2",
+            "ipv4.method", "auto",
+            "ipv6.method", "auto",
+        )
+        if exists:
+            configured, output = await self.run_command("nmcli", "connection", "modify", "id", profile, *settings)
+        else:
+            configured, output = await self.run_command(
+                "nmcli", "connection", "add", "type", "wifi", "ifname", device,
+                "con-name", profile, "ssid", network["ssid"], *settings,
+            )
+        if not configured:
+            self.show_notice(output or "Could not configure enterprise Wi-Fi")
+            return
+
+        ok, output = await self.run_command(
+            "nmcli", "--wait", "20", "connection", "up", "id", profile, "ifname", device,
+            timeout=25,
+        )
+        self.show_notice("Connected to " + network["ssid"] if ok else output or "Enterprise Wi-Fi connection failed")
+        await self.refresh_wifi()
+
     def request_wifi_connection(self) -> None:
         network = self.selected_wifi()
         if not network:
@@ -276,6 +363,12 @@ class ConnectApp(App[None]):
             return
         if network["active"] == "yes":
             self.show_notice(f"Already connected to {network['ssid']}", title="WIFI", timeout=3)
+            return
+        if self.is_enterprise_wifi(network):
+            self.push_screen(
+                EnterpriseDialog(network["ssid"]),
+                lambda credentials: asyncio.create_task(self.connect_enterprise_wifi(network, *credentials)) if credentials else None,
+            )
             return
         if network["security"] == "Open":
             asyncio.create_task(self.connect_wifi(network))
