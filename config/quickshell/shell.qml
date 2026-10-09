@@ -415,11 +415,13 @@ ShellRoot {
                         id: batteryText
                         anchors.centerIn: parent
                         text: Math.round(UPower.displayDevice.percentage * 100)
-                        color: UPower.displayDevice.percentage <= 0.20
-                            ? "#BC4F4F"
-                            : UPower.displayDevice.percentage <= 0.50
-                                ? "#E9C46A"
-                                : theme.terminalPromptLight
+                        color: UPower.displayDevice.state === UPowerDeviceState.Charging
+                            ? "#8BBB92"
+                            : UPower.displayDevice.percentage <= 0.20
+                                ? "#BC4F4F"
+                                : UPower.displayDevice.percentage <= 0.50
+                                    ? "#E9C46A"
+                                    : theme.terminalPromptLight
                         font.family: "JetBrainsMono Nerd Font"
                         font.pixelSize: 14
                         verticalAlignment: Text.AlignVCenter
